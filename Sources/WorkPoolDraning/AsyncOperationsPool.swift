@@ -58,7 +58,8 @@ public final class AsyncOperationsPool<T>: AsyncSequence, @unchecked Sendable {
             // In this case `unlock` might be called with some delay, but there is no better way, as we need `continuation` before unlocking
             return try await withCheckedThrowingContinuation { continuation in
                 pool.resultsWaiters.append { result in
-                    continuation.resume(with: result.map { $0 as T? })
+                    let optionalResult = result.map { $0 as T? }
+                    continuation.resume(with: optionalResult)
                 }
                 pool.lock.unlock()
             }
@@ -166,19 +167,26 @@ public final class AsyncOperationsPool<T>: AsyncSequence, @unchecked Sendable {
             return
         }
 
+        let result: Result<T, Error>
+
         do {
             let t = try await work()
-            let waiters = didCompleteWork {
-                results.append(t)
-                return resultsWaiters
-            }
-            waiters.forEach { $0(.success(t)) }
+            result = .success(t)
         } catch let exc {
             firstError = exc
-            let waiters = didCompleteWork {
-                return resultsWaiters
-            }
-            waiters.forEach { $0(.failure(exc)) }
+            result = .failure(exc)
+
         }
+
+        let waiters = didCompleteWork {
+            if let t = try? result.get() {
+                results.append(t)
+            }
+            let res = resultsWaiters
+            resultsWaiters = []
+            return res
+
+        }
+        waiters.forEach { $0(result) }
     }
 }

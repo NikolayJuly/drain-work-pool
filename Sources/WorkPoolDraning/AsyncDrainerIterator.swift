@@ -1,6 +1,5 @@
 import Foundation
 
-
 enum DrainerState {
     case draining
     case completed
@@ -19,13 +18,14 @@ protocol ThreadSafeDrainer<Output>: AnyObject {
     var state: DrainerState { get }
 
     /// Should be accesses only behind `internalStateLock`
-    var storage: [Output] { get set }
+    var storage: [Output] { get }
 
     /// Should be accesses only behind `internalStateLock`
     var updateWaiters: [UpdateWaiter<Output>] { get set }
 }
 
 public struct AsyncDrainerIterator<T>: AsyncIteratorProtocol {
+
     public typealias Element = T
 
     public mutating func next() async throws -> Element? {
@@ -49,10 +49,12 @@ public struct AsyncDrainerIterator<T>: AsyncIteratorProtocol {
         do {
             drainer.internalStateLock.lock()
             defer { drainer.internalStateLock.unlock() }
+
             if drainer.storage.count > counter {
                 defer { counter += 1 }
                 return drainer.storage[counter]
             }
+
             switch drainer.state {
             case .completed:
                 return nil
@@ -61,6 +63,11 @@ public struct AsyncDrainerIterator<T>: AsyncIteratorProtocol {
             case .draining:
                 break
             }
+
+            // Increase counter, because we will get value or will stop enumeration after this
+            // so when this method will be called again, we will have correct counter
+            counter += 1
+
             drainer.updateWaiters.append { result in
                 update(result, nil)
             }

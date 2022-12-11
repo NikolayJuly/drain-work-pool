@@ -25,7 +25,7 @@ public enum WorkPoolDrainer: Error {
 /// }
 /// ```
 ///
-/// - note: Order of iteration might be different from order of input stack, because each process might take different amount of time and we prefer provide result ASAP
+/// - note: Order of iteration might be different from order of input stack, because each process might take different amount of time and we prefer to provide result ASAP
 public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer {
 
     public typealias AsyncIterator = AsyncDrainerIterator
@@ -69,8 +69,8 @@ public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unc
     // MARK: ThreadSafeDrainer
 
     let internalStateLock = PosixLock()
-    var storage = [Output]()
-    var state: DrainerState
+    private(set) var state: DrainerState
+    private(set) var storage = [Output]()
     var updateWaiters = [(Result<Output?, Error>) -> Void]()
 
     // MARK: Private

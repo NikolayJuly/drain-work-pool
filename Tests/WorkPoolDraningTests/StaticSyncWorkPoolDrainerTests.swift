@@ -7,26 +7,32 @@ final class StaticSyncWorkPoolDrainerTests: XCTestCase {
     // From other side - if it failes - we have an issue for sure
     func testIntProcessing() async throws {
 
-        @Atomic var processInts = Set<Int>()
+        @Atomic var processIntsArray = [Int]()
 
         let drainer = StaticSyncWorkPoolDrainer<Int, Int>(queuesPoolSize: 20,
                                                           stack: 0..<1024) { int in
-            _processInts.mutate { `set` in
+            _processIntsArray.mutate { `set` in
                 if Bool.random() {
                     usleep(500)
                 }
-                `set`.insert(int)
+                `set`.append(int)
             }
             return int
         }
 
-        var resSet = Set<Int>()
+        var resIntsArray = [Int]()
         for try await i in drainer {
-            resSet.insert(i)
+            resIntsArray.append(i)
         }
 
+        let processIntsSet = Set(processIntsArray)
+        let resIntsSet = Set(resIntsArray)
+
         let ferSet = Set(0..<1024)
-        XCTAssertEqual(resSet, ferSet)
-        XCTAssertEqual(processInts, ferSet)
+        XCTAssertEqual(resIntsSet, ferSet)
+        XCTAssertEqual(processIntsSet, ferSet)
+
+        XCTAssertEqual(processIntsArray.count, 1024)
+        XCTAssertEqual(resIntsSet.count, 1024)
     }
 }

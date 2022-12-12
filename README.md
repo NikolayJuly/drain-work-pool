@@ -6,7 +6,7 @@ You can choose one, which fit your needs:
 - [StaticSyncWorkPoolDrainer](Sources/WorkPoolDraning/StaticSyncWorkPoolDrainer.swift) - works with predefined stack of elements and execute same task on all of them. Task block must be sync
 - [DynamicAsyncWorkPoolDrainer](Sources/WorkPoolDraning/DynamicAsyncWorkPoolDrainer.swift) - work with dynamicly growing pool of work. Task block can be async
 
-### Why do we need these calsses, if we have TaskGroup? ###
+### Why do we need these classes, if we have TaskGroup? ###
 `TaskGroup` do not allow to limit number of simultaneous executions, which is important in some cases:
 - Internet bandwidth is limited, no reason to trigger unlimited amount of connections
 - Storage bandwidth is limited, no reason to start thousands of read/write operations at the same time

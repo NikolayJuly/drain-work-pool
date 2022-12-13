@@ -3,7 +3,7 @@
 
 This package contains 2 classes, which aim to help orgnize heavy operations and limit simultaneous load on computer resources.
 You can choose one, which fit your needs:
-- [StaticSyncWorkPoolDrainer](Sources/WorkPoolDraning/StaticSyncWorkPoolDrainer.swift) - works with predefined stack of elements and execute same task on all of them. Task block must be sync
+- [StaticSyncWorkPoolDrainer](Sources/WorkPoolDraning/StaticSyncWorkPoolDrainer.swift) - works with predefined stack of elements and execute same task on each of them. Task block must be sync
 - [DynamicAsyncWorkPoolDrainer](Sources/WorkPoolDraning/DynamicAsyncWorkPoolDrainer.swift) - work with dynamicly growing pool of work. Task block can be async
 
 ### Why do we need these classes, if we have TaskGroup? ###

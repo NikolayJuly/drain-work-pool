@@ -2,17 +2,13 @@ import DequeModule
 import Dispatch
 import Foundation
 
-public enum WorkPoolDrainer: Error {
-    case cancelled
-}
-
 /// Executed sync process block on predefined stack of elements, limiting number of simultanious executions
 ///
 /// Execute heavy operations on given stack of items with limit on number of simultanious execution.
 /// Build on DispatchQueue concepts. Limit of simultanious execution is defined by number of serial queues created inside (or provided in init)
 /// This class useful when work on each element can be presented as sync block and amount of work known in advance
 ///
-/// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainer.cancelled` in iterator
+/// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainerError.cancelled` in iterator
 ///
 /// Usage:
 /// ```
@@ -26,7 +22,7 @@ public enum WorkPoolDrainer: Error {
 /// ```
 ///
 /// - note: Order of iteration might be different from order of input stack, because each process might take different amount of time and we prefer to provide result ASAP
-public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer {
+public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer, WorkPoolDrainer {
 
     public typealias AsyncIterator = AsyncDrainerIterator
 
@@ -57,7 +53,17 @@ public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unc
     }
 
     public func cancel() {
-        fail(WorkPoolDrainer.cancelled)
+        do {
+            internalStateLock.lock()
+            defer { internalStateLock.unlock() }
+            switch state {
+            case .completed, .failed:
+                return
+            case .draining:
+                break
+            }
+        }
+        fail(WorkPoolDrainerError.cancelled)
     }
 
     // MARK: AsyncSequence

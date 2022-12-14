@@ -1,10 +1,13 @@
 # WorkPoolDraning
 ![swift](https://img.shields.io/badge/Swift-5.7-orange.svg)
 
-This package contains 2 classes, which aim to help orgnize heavy operations and limit simultaneous load on computer resources.
+This package contains 3 classes, which aim to help orgnize heavy operations and limit simultaneous load on computer resources.
 You can choose one, which fit your needs:
 - [StaticSyncWorkPoolDrainer](Sources/WorkPoolDraning/StaticSyncWorkPoolDrainer.swift) - works with predefined stack of elements and execute same task on each of them. Task block must be sync
+- [StaticAsyncWorkPoolDrainer](Sources/WorkPoolDraning/StaticAsyncWorkPoolDrainer.swift) - works with predefined stack of elements and execute same task on each of them. Task block can be async
 - [DynamicAsyncWorkPoolDrainer](Sources/WorkPoolDraning/DynamicAsyncWorkPoolDrainer.swift) - work with dynamicly growing pool of work. Task block can be async
+
+All 3 classes are async sequence with push approach. Which means, we execute tasks at max pace, even if there is no iteration atm.
 
 ### Why do we need these classes, if we have TaskGroup? ###
 `TaskGroup` do not allow to limit number of simultaneous executions, which is important in some cases:

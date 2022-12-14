@@ -5,7 +5,7 @@ import Foundation
 /// In some cases, we need execute many heavy tasks and we want limit number of simultanious executions
 /// ``Swift.TaskGroup`` execute all given tasks simultaniously, so it is not suitable for this scenario
 ///
-/// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainer.cancelled` in iterator
+/// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainerError.cancelled` in iterator
 ///
 /// Usage:
 /// ```
@@ -19,7 +19,7 @@ import Foundation
 /// ```
 ///
 /// - note: Order of iteration might be different from order of input stack, because each process might take different amount of time and we prefer to provide result ASAP
-public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer {
+public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unchecked Sendable, WorkPoolDrainer {
 
     public typealias Element = Output
 
@@ -38,6 +38,14 @@ public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @un
     }
 
     public func cancel() {
+        pool.internalStateLock.lock()
+        defer { pool.internalStateLock.unlock() }
+        switch pool.state {
+        case .completed, .failed:
+            return
+        case .draining:
+            break
+        }
         pool.cancel()
     }
 
@@ -45,19 +53,6 @@ public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @un
 
     public func makeAsyncIterator() -> AsyncDrainerIterator<Element> {
         pool.makeAsyncIterator()
-    }
-
-    // MARK: ThreadSafeDrainer
-
-    var internalStateLock: PosixLock { pool.internalStateLock }
-
-    var state: DrainerState { pool.state }
-
-    var storage: [Output] { pool.storage }
-
-    var updateWaiters: [UpdateWaiter<Output>] {
-        get { pool.updateWaiters }
-        set { pool.updateWaiters = newValue }
     }
 
     // MARK: Private

@@ -9,7 +9,7 @@ import Foundation
 /// `DynamicAsyncWorkPoolDrainer` allow to add work dynamically. Even if atm it was drained, you still can add more work and iterate later over all resutls.
 ///  But if one of tasks failed ot draining was cancelled, no new work will be added
 ///
-/// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainer.cancelled` in iterator
+/// If drain will be cancelled, it will throw `WorkPoolDrainerError.cancelled` in iterator. This happens even if all current tasks completed
 ///
 /// Usage:
 /// ```
@@ -26,7 +26,7 @@ import Foundation
 /// - note: Adding extra work when iteration is almost completed might lead to undefined iterator behaviour. So better to add all work and start iteration after that.
 ///
 /// Order of iteration might be different from order of added work, because each process might take different amount of time and we prefer to provide result ASAP
-public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer {
+public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer, WorkPoolDrainer {
 
     public typealias Element = T
 
@@ -60,12 +60,12 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
     public func cancel() {
         internalStateLock.lock()
         defer { internalStateLock.unlock() }
-        self.state = .failed(WorkPoolDrainer.cancelled)
+        self.state = .failed(WorkPoolDrainerError.cancelled)
         self.producers.removeAll()
         let waiters = self.updateWaiters
         self.updateWaiters.removeAll()
         DispatchQueue.global().async {
-            waiters.forEach { $0(.failure(WorkPoolDrainer.cancelled)) }
+            waiters.forEach { $0(.failure(WorkPoolDrainerError.cancelled)) }
         }
     }
 

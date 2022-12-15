@@ -4,15 +4,15 @@ import Foundation
 /// Drain dynamicly sized pool of work, limiting number of simultanious executions
 ///
 /// In some cases, we need execute many heavy tasks and we want limit number of simultanious executions
-/// ``Swift.TaskGroup`` execute all given tasks simultaniously, so it is not suitable for this scenario
+/// `TaskGroup` execute all given tasks simultaniously, so it is not suitable for this scenario
 ///
 /// `DynamicAsyncWorkPoolDrainer` allow to add work dynamically. Even if atm it was drained, you still can add more work and iterate later over all resutls.
-///  But if one of tasks failed ot draining was cancelled, no new work will be added
+///  But if one or tasks failed ot draining was cancelled - no new work will be added
 ///
 /// If drain will be cancelled, it will throw `WorkPoolDrainerError.cancelled` in iterator. This happens even if all current tasks completed
 ///
 /// Usage:
-/// ```
+/// ```swift
 /// let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 5)
 /// for i in 0..<1024 {
 ///     pool.add { /* soem heavy task */ }
@@ -24,8 +24,7 @@ import Foundation
 /// ```
 ///
 /// - note: Adding extra work when iteration is almost completed might lead to undefined iterator behaviour. So better to add all work and start iteration after that.
-///
-/// Order of iteration might be different from order of added work, because each process might take different amount of time and we prefer to provide result ASAP
+/// - note: Order of iteration might be different from order of added work, because each process might take different amount of time and we prefer to provide result ASAP
 public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer, WorkPoolDrainer {
 
     public typealias Element = T
@@ -37,7 +36,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
         self.maxConcurrentOperationCount = maxConcurrentOperationCount
     }
 
-    /// Order of execution and order of results is not guaranteed
+    /// Order of execution and order of results are not guaranteed
     public func add(_ work: @Sendable @escaping () async throws -> T) {
         internalStateLock.lock()
         defer { internalStateLock.unlock() }

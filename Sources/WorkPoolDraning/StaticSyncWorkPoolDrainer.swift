@@ -11,7 +11,7 @@ import Foundation
 /// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainerError.cancelled` in iterator
 ///
 /// Usage:
-/// ```
+/// ```swift
 /// let drainer = StaticSyncWorkPoolDrainer(queuesPoolSize: 5, stack: files) { file in
 ///     // heavy operation on input file
 /// }

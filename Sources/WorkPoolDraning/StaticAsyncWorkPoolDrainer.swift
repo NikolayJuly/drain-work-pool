@@ -3,12 +3,12 @@ import Foundation
 /// Executed async process block on predefined stack of elements, limiting number of simultanious executions
 ///
 /// In some cases, we need execute many heavy tasks and we want limit number of simultanious executions
-/// ``Swift.TaskGroup`` execute all given tasks simultaniously, so it is not suitable for this scenario
+/// `TaskGroup` execute all given tasks simultaniously, so it is not suitable for this scenario
 ///
 /// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainerError.cancelled` in iterator
 ///
 /// Usage:
-/// ```
+/// ```swift
 /// let drainer = StaticAsyncWorkPoolDrainer(stack: files, maxConcurrentOperationCount: 5) { file in
 ///     // heavy operation on input file
 /// }

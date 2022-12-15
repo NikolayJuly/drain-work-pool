@@ -1,17 +1,38 @@
-# WorkPoolDraning
 ![swift](https://img.shields.io/badge/Swift-5.7-orange.svg)
 
-This package contains 3 classes, which aim to help orgnize heavy operations and limit simultaneous load on computer resources.
-You can choose one, which fit your needs:
-- [StaticSyncWorkPoolDrainer](Sources/WorkPoolDraning/StaticSyncWorkPoolDrainer.swift) - works with predefined stack of elements and execute same task on each of them. Task block must be sync
-- [StaticAsyncWorkPoolDrainer](Sources/WorkPoolDraning/StaticAsyncWorkPoolDrainer.swift) - works with predefined stack of elements and execute same task on each of them. Task block can be async
-- [DynamicAsyncWorkPoolDrainer](Sources/WorkPoolDraning/DynamicAsyncWorkPoolDrainer.swift) - work with dynamicly growing pool of work. Task block can be async
+# WorkPoolDraning
 
-All 3 classes are async sequence with push approach. Which means, we execute tasks at max pace, even if there is no iteration atm.
+This package aim to help with execute big amount of tasks, but limit number of simultaneously executed tasks.
 
-### Why do we need these classes, if we have TaskGroup? ###
+## Overview
+
+All work pools in package are `AsyncDequence`, which works on push approach. It means that work will be executed even if no one iterate over it.
+
+
+## How to choose correct work pool?
+
+Package contains 2 type of pools: static and dynamic. Dynamic pool allow you to add work tasks while it is executing. 
+Static pool, on the other hand, execute same task on predefined stack of elements.
+
+On top of that, choose which basis you want: DispatchQueue or Structured Concurrency.
+
+Decision tree:
+- Static + DispatchQueue: ``StaticSyncWorkPoolDrainer``
+- Static + Structured Concurrency: ``StaticAsyncWorkPoolDrainer``
+- Dynamic + Structured Concurrency: ``DynamicAsyncWorkPoolDrainer``
+
+## Why?
+
+Why do we need these package, if we have TaskGroup?
+
 `TaskGroup` do not allow to limit number of simultaneous executions, which is important in some cases:
+
 - Internet bandwidth is limited, no reason to trigger unlimited amount of connections
 - Storage bandwidth is limited, no reason to start thousands of read/write operations at the same time
 - Needs to limit CPU usage, becase you need to use mac, while it executes long running tasks in background
 - Define QoS not always enough, as you might want to have more control over number of simultaneous excutions and do not depend on QoS evristics
+
+
+## Documentation
+
+Swift DocC documentation is available [here](https://nikolayjuly.github.io/drain-work-pool/documentation/workpooldraning/)

@@ -6,8 +6,16 @@ public enum WorkPoolDrainerError: Error {
 
 public protocol WorkPoolDrainer<Element>: AsyncSequence {
 
+    /// Cancel drain.
+    ///
+    /// Nothing happens if work pool is static and draining completed.
+    ///
+    /// In case of dynamic work pool, no new tasks can be added after that and no new tasks will be executer.
+    /// Currently running tasks will continue running, but their result will be ignored.
+    /// - note: if drainer was stopped, iterators will throw ``WorkPoolDrainerError/cancelled``
     func cancel()
 
+    /// Itereate over all elements and return them as an Array
     func collect() async throws -> [Element]
 }
 

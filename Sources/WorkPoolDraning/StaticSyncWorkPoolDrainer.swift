@@ -1,4 +1,3 @@
-import DequeModule
 import Dispatch
 import Foundation
 
@@ -44,7 +43,7 @@ public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unc
                 stack: some Collection<Input>,
                 process: @escaping (Input) throws -> Output) {
         precondition(queuesPool.count > 0)
-        self.stack = Deque(stack)
+        self.stack = Array(stack)
         self.queuesPool = queuesPool
         self.process = process
         self.state = .draining
@@ -89,7 +88,7 @@ public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unc
 
     private let queuesPool: [DispatchQueue]
     @Atomic
-    private var stack: Deque<Input>
+    private var stack: [Input]
 
 
     private let process: (Input) throws -> Output

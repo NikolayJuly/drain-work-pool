@@ -13,15 +13,11 @@ let package = Package(
             name: "WorkPoolDraning",
             targets: ["WorkPoolDraning"]),
     ],
-    dependencies: [
-        .package(url: "https://github.com/apple/swift-collections", from: "1.0.0"),
-    ],
+    dependencies: [],
     targets: [
         .target(
             name: "WorkPoolDraning",
-            dependencies: [
-                .product(name: "DequeModule", package: "swift-collections")
-            ]),
+            dependencies: []),
         .testTarget(
             name: "WorkPoolDraningTests",
             dependencies: ["WorkPoolDraning"]),

@@ -1,4 +1,3 @@
-import DequeModule
 import Foundation
 
 /// Drain dynamicly sized pool of work, limiting number of simultanious executions
@@ -90,7 +89,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
 
     private let maxConcurrentOperationCount: Int
 
-    private var producers = Deque<() async throws -> T>()
+    private var producers = [() async throws -> T]()
 
     private var currentRunningOperationsCount: Int = 0
     private var preWaitCount: Int = 0

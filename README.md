@@ -2,10 +2,11 @@
 
 # WorkPoolDraning
 
-This package aim to help with execute big amount of tasks, but limit number of simultaneously executed tasks.
+This package aim to help with execution of big amount of tasks, but limit number of simultaneously executed tasks.
 
 ## Overview
 
+Package provides few work pools, depending on knowledge of input tasks beforehand. 
 All work pools in package are `AsyncDequence`, which works on push approach. It means that work will be executed even if no one iterate over it.
 
 
@@ -29,7 +30,7 @@ Why do we need these package, if we have TaskGroup?
 
 - Internet bandwidth is limited, no reason to trigger unlimited amount of connections
 - Storage bandwidth is limited, no reason to start thousands of read/write operations at the same time
-- Needs to limit CPU usage, becase you need to use mac, while it executes long running tasks in background
+- Needs to limit CPU usage, because you need to use mac, while it executes long running tasks in background
 - Define QoS not always enough, as you might want to have more control over number of simultaneous excutions and do not depend on QoS evristics
 
 

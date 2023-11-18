@@ -38,14 +38,19 @@ public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @un
     }
 
     public func cancel() {
-        pool.internalStateLock.lock()
-        defer { pool.internalStateLock.unlock() }
-        switch pool.state {
-        case .completed, .failed:
-            return
-        case .draining:
-            break
+        let alreadyCompleted = pool.executeBehindLock { unsafeDrainer in
+            switch unsafeDrainer.state {
+            case .completed, .failed:
+                return true
+            case .draining:
+                return false
+            }
         }
+
+        guard !alreadyCompleted else {
+            return
+        }
+
         pool.cancel()
     }
 

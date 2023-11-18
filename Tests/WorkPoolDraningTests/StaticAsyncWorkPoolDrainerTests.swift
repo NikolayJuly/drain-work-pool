@@ -2,19 +2,20 @@ import Foundation
 import XCTest
 @testable import WorkPoolDraning
 
-final class StaticSyncWorkPoolDrainerTests: XCTestCase {
+final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
     // This test do not gurantee that `StaticSyncWorkPoolDrainer` works as expected. Better run few times
     // From other side - if it failes - we have an issue for sure
     func testIntProcessing() async throws {
 
         @Atomic var processIntsArray = [Int]()
 
-        let drainer = StaticSyncWorkPoolDrainer<Int, Int>(queuesPoolSize: 20,
-                                                          stack: 0..<1024) { int in
+        let drainer = StaticAsyncWorkPoolDrainer<Int, Int>(stack: 0..<1024,
+                                                           maxConcurrentOperationCount: 20) { int in
+            if Bool.random() {
+                try await Task.sleep(nanoseconds: 500)
+            }
             _processIntsArray.mutate { `set` in
-                if Bool.random() {
-                    usleep(500)
-                }
+
                 `set`.append(int)
             }
             return int
@@ -40,8 +41,8 @@ final class StaticSyncWorkPoolDrainerTests: XCTestCase {
 
         @Atomic var concurrentlyRunning = 0
 
-        let drainer = StaticSyncWorkPoolDrainer<Int, Void>(queuesPoolSize: 5,
-                                                           stack: 0..<1024) { int in
+        let drainer = StaticAsyncWorkPoolDrainer<Int, Void>(stack: 0..<1024,
+                                                           maxConcurrentOperationCount: 5) { int in
             _concurrentlyRunning.mutate { counter in
                 counter += 1
             }
@@ -49,7 +50,7 @@ final class StaticSyncWorkPoolDrainerTests: XCTestCase {
             XCTAssertTrue(concurrentlyRunning <= 5)
 
             if Bool.random() {
-                usleep(500)
+                try await Task.sleep(nanoseconds: 500)
             }
 
             XCTAssertTrue(concurrentlyRunning <= 5)

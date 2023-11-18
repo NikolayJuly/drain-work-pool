@@ -24,7 +24,8 @@ import Foundation
 ///
 /// - note: Adding extra work when iteration is almost completed might lead to undefined iterator behaviour. So better to add all work and start iteration after that.
 /// - note: Order of iteration might be different from order of added work, because each process might take different amount of time and we prefer to provide result ASAP
-public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer, WorkPoolDrainer {
+public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sendable,
+                                                   ThreadSafeDrainer, ThreadUnsafeDrainer, WorkPoolDrainer {
 
     public typealias Element = T
 
@@ -76,14 +77,27 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
     // MARK: ThreadSafeDrainer
 
     typealias Output = T
-
     let internalStateLock = PosixLock()
+
+    func executeBehindLock<P>(_ block: (any ThreadUnsafeDrainer<T>) throws -> P) rethrows -> P {
+        internalStateLock.lock()
+        defer { internalStateLock.unlock() }
+
+        return try block(self)
+    }
+
+
+    // MARK: ThreadUnsafeDrainer
 
     private(set) var state: DrainerState = .completed
 
-    private(set) var storage = [T]()
+    private var storage = [T]()
 
     var updateWaiters = [UpdateWaiter<T>]()
+
+    subscript(index: Int) -> T? {
+        storage.count > index ? storage[index] : nil
+    }
 
     // MARK: Private
 

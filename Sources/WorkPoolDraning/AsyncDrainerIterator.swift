@@ -12,16 +12,23 @@ protocol ThreadSafeDrainer<Output>: AnyObject {
 
     associatedtype Output
 
-    var internalStateLock: PosixLock { get }
+    /// `ThreadUnsafeDrainer` sould not be used outside of block
+    func executeBehindLock<T>(_ block: (any ThreadUnsafeDrainer<Output>) throws -> T) rethrows -> T
+}
+
+protocol ThreadUnsafeDrainer<Output>: AnyObject {
+
+    associatedtype Output
 
     /// Should be accesses only behind `internalStateLock`
     var state: DrainerState { get }
 
     /// Should be accesses only behind `internalStateLock`
-    var storage: [Output] { get }
+    var updateWaiters: [UpdateWaiter<Output>] { get set }
 
     /// Should be accesses only behind `internalStateLock`
-    var updateWaiters: [UpdateWaiter<Output>] { get set }
+    /// - returns: input at `index`, if element already processes, otherwise returns nil
+    subscript(_ index: Int) -> Output? { get }
 }
 
 public struct AsyncDrainerIterator<T>: AsyncIteratorProtocol {
@@ -34,6 +41,7 @@ public struct AsyncDrainerIterator<T>: AsyncIteratorProtocol {
 
         @Atomic var touple: Touple = (nil, nil)
 
+        // It will be called separately from continuation and from drainer update, it will resume continuation when both call happens
         let update: (Result<Element?, Error>?, CheckedContinuation<Element?, Error>?) -> Void = { result, continuation in
             _touple.mutate { currentTuple in
                 currentTuple.result = result ?? currentTuple.result
@@ -46,31 +54,39 @@ public struct AsyncDrainerIterator<T>: AsyncIteratorProtocol {
             }
         }
 
-        do {
-            drainer.internalStateLock.lock()
-            defer { drainer.internalStateLock.unlock() }
+        let intermediateResult: IntermediateResult = try drainer.executeBehindLock { unsafeDrainer in
 
-            if drainer.storage.count > counter {
-                defer { counter += 1 }
-                return drainer.storage[counter]
+            // Increase counter, because we will get value or will stop enumeration after this
+            // so when this method will be called again, we will have correct counter
+            defer { counter += 1 }
+
+            if let existed = unsafeDrainer[counter] {
+                return .element(existed)
             }
 
-            switch drainer.state {
+            switch unsafeDrainer.state {
             case .completed:
-                return nil
+                return .completed
             case let .failed(error):
                 throw error
             case .draining:
                 break
             }
 
-            // Increase counter, because we will get value or will stop enumeration after this
-            // so when this method will be called again, we will have correct counter
-            counter += 1
-
-            drainer.updateWaiters.append { result in
+            unsafeDrainer.updateWaiters.append { result in
                 update(result, nil)
             }
+
+            return .waiting
+        }
+
+        switch intermediateResult {
+        case .completed:
+            return nil
+        case let .element(element):
+            return element
+        case .waiting:
+            break
         }
 
         return try await withCheckedThrowingContinuation { continuation in
@@ -84,4 +100,10 @@ public struct AsyncDrainerIterator<T>: AsyncIteratorProtocol {
 
     private var counter = 0
     private let drainer: any ThreadSafeDrainer<Element>
+
+    private enum IntermediateResult {
+        case element(Element)
+        case completed
+        case waiting
+    }
 }

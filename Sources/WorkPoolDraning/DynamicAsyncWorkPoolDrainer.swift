@@ -50,7 +50,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
             return
         }
 
-        DispatchQueue.global().async {
+        Task.detached {
             self.checkForAvailableSlot()
         }
     }
@@ -68,7 +68,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
             return
         }
 
-        DispatchQueue.global().async {
+        Task.detached {
             self.checkForAvailableSlot()
         }
     }
@@ -82,7 +82,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
         if producers.isEmpty {
             let waiters = self.updateWaiters
             self.updateWaiters.removeAll()
-            DispatchQueue.global().async {
+            Task.detached {
                 waiters.forEach { $0(.success(nil)) }
             }
             self.state = .completed
@@ -96,7 +96,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
         self.producers.removeAll()
         let waiters = self.updateWaiters
         self.updateWaiters.removeAll()
-        DispatchQueue.global().async {
+        Task.detached {
             waiters.forEach { $0(.failure(WorkPoolDrainerError.cancelled)) }
         }
     }
@@ -164,7 +164,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
                 self.state = .completed
                 let waiters = self.updateWaiters
                 self.updateWaiters.removeAll()
-                DispatchQueue.global().async {
+                Task.detached {
                     waiters.forEach { $0(.success(nil)) }
                 }
             }
@@ -213,7 +213,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
 
             let optionalResult = result.map { $0 as T? }
 
-            DispatchQueue.global().async {
+            Task.detached {
                 waiters.forEach { $0(optionalResult) }
             }
 
@@ -222,7 +222,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
             }
         }
 
-        DispatchQueue.global().async {
+        Task.detached {
             self.checkForAvailableSlot()
         }
     }

@@ -7,7 +7,7 @@ This package aim to help with execution of big amount of tasks, but limit number
 ## Overview
 
 Package provides few work pools, depending on knowledge of input tasks beforehand. 
-All work pools in package are `AsyncAequence`, which works on push approach. It means that work will be executed even if no one iterate over it.
+All work pools in package are `AsyncSequence`, which works on push approach. It means that work will be executed even if no one iterate over it.
 
 
 ## How to choose correct work pool?

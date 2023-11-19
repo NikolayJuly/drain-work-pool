@@ -21,7 +21,8 @@ import Foundation
 /// ```
 ///
 /// - note: Order of iteration might be different from order of input stack, because each process might take different amount of time and we prefer to provide result ASAP
-public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unchecked Sendable, ThreadSafeDrainer, WorkPoolDrainer {
+public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unchecked Sendable,
+                                                             ThreadSafeDrainer, ThreadUnsafeDrainer,  WorkPoolDrainer {
 
     public typealias AsyncIterator = AsyncDrainerIterator
 
@@ -73,10 +74,24 @@ public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unc
 
     // MARK: ThreadSafeDrainer
 
-    let internalStateLock = PosixLock()
+    private let internalStateLock = PosixLock()
+
+    func executeBehindLock<T>(_ block: (any ThreadUnsafeDrainer<Output>) throws -> T) rethrows -> T {
+        internalStateLock.lock()
+        defer { internalStateLock.unlock() }
+
+        return try block(self)
+    }
+
+    // MARK: ThreadUnsafeDrainer
+
     private(set) var state: DrainerState
-    private(set) var storage = [Output]()
+    private var storage = [Output]()
     var updateWaiters = [(Result<Output?, Error>) -> Void]()
+
+    subscript(index: Int) -> Output? {
+        storage.count > index ? storage[index] : nil
+    }
 
     // MARK: Private
 

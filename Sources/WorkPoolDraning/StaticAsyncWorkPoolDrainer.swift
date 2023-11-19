@@ -30,22 +30,30 @@ public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @un
                 process: @escaping (Input) async throws -> Output) {
         precondition(maxConcurrentOperationCount > 0)
         self.pool = DynamicAsyncWorkPoolDrainer(maxConcurrentOperationCount: maxConcurrentOperationCount)
-        for element in stack {
-            pool.add {
-                try await process(element)
-            }
+
+        let works: [@Sendable () async throws -> Output] = stack.map { element in
+            { try await process(element) }
         }
+
+        // Use `!`, because I know that it will throw ONLY if we already closed intake
+        try! pool.addMany(works)
+        pool.closeIntake()
     }
 
     public func cancel() {
-        pool.internalStateLock.lock()
-        defer { pool.internalStateLock.unlock() }
-        switch pool.state {
-        case .completed, .failed:
-            return
-        case .draining:
-            break
+        let alreadyCompleted = pool.executeBehindLock { unsafeDrainer in
+            switch unsafeDrainer.state {
+            case .completed, .failed:
+                return true
+            case .draining:
+                return false
+            }
         }
+
+        guard !alreadyCompleted else {
+            return
+        }
+
         pool.cancel()
     }
 

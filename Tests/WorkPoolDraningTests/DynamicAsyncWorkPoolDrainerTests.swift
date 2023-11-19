@@ -9,7 +9,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
     func testIntProcessingAndAddWorkDuringDraining() async throws {
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 20)
         for i in 0..<1024 {
-            pool.add {
+            try pool.add {
                 if Bool.random() {
                     try await Task.sleep(nanoseconds: 500_000)
                 }
@@ -21,7 +21,11 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
         for try await i in pool {
             resArray.append(i)
             if i % 128 == 0 {
-                pool.add { 1024 + i/128 }
+                try pool.add { 1024 + i/128 }
+            }
+
+            if i == 1024 {
+                pool.closeIntake()
             }
         }
 

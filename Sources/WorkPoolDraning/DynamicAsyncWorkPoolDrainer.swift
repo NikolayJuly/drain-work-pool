@@ -14,15 +14,15 @@ import Foundation
 /// ```swift
 /// let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 5)
 /// for i in 0..<1024 {
-///     pool.add { /* soem heavy task */ }
+///     pool.add { /* some heavy task */ }
 /// }
+/// pool.closeIntake()
 ///
 /// for try await i in pool {
 ///   // process result
 /// }
 /// ```
 ///
-/// - note: Adding extra work when iteration is almost completed might lead to undefined iterator behaviour. So better to add all work and start iteration after that.
 /// - note: Order of iteration might be different from order of added work, because each process might take different amount of time and we prefer to provide result ASAP
 public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sendable,
                                                    ThreadSafeDrainer, ThreadUnsafeDrainer, WorkPoolDrainer {
@@ -37,14 +37,13 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
     }
 
     /// Order of execution and order of results are not guaranteed
-    public func add(_ work: @Sendable @escaping () async throws -> T) {
+    public func add(_ work: @Sendable @escaping () async throws -> T) throws {
         internalStateLock.lock()
         defer { internalStateLock.unlock() }
 
         switch state {
         case .completed:
-            self.state = .draining
-            fallthrough
+            throw WorkPoolDrainerError.poolIntakeAlreadyClosed
         case .draining:
             producers.append(work)
         case .failed:
@@ -53,6 +52,40 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
 
         DispatchQueue.global().async {
             self.checkForAvailableSlot()
+        }
+    }
+
+    public func addMany(_ works: [@Sendable () async throws -> T]) throws {
+        internalStateLock.lock()
+        defer { internalStateLock.unlock() }
+
+        switch state {
+        case .completed:
+            throw WorkPoolDrainerError.poolIntakeAlreadyClosed
+        case .draining:
+            producers.append(contentsOf: works)
+        case .failed:
+            return
+        }
+
+        DispatchQueue.global().async {
+            self.checkForAvailableSlot()
+        }
+    }
+
+
+    public func closeIntake() {
+        internalStateLock.lock()
+        defer { internalStateLock.unlock() }
+        isSealed = true
+
+        if producers.isEmpty {
+            let waiters = self.updateWaiters
+            self.updateWaiters.removeAll()
+            DispatchQueue.global().async {
+                waiters.forEach { $0(.success(nil)) }
+            }
+            self.state = .completed
         }
     }
 
@@ -89,7 +122,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
 
     // MARK: ThreadUnsafeDrainer
 
-    private(set) var state: DrainerState = .completed
+    private(set) var state: DrainerState = .draining
 
     private var storage = [T]()
 
@@ -103,10 +136,11 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
 
     private let maxConcurrentOperationCount: Int
 
-    private var producers = [() async throws -> T]()
+    private var producers = [@Sendable () async throws -> T]()
 
     private var currentRunningOperationsCount: Int = 0
-    private var preWaitCount: Int = 0
+
+    private var isSealed: Bool = false
 
     private func checkForAvailableSlot() {
         internalStateLock.lock()
@@ -126,7 +160,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
         }
 
         guard let producer = producers.popFirst() else {
-            if currentRunningOperationsCount == 0 {
+            if currentRunningOperationsCount == 0, isSealed {
                 self.state = .completed
                 let waiters = self.updateWaiters
                 self.updateWaiters.removeAll()

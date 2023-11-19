@@ -15,7 +15,6 @@ final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
                 try await Task.sleep(nanoseconds: 500)
             }
             _processIntsArray.mutate { `set` in
-
                 `set`.append(int)
             }
             return int
@@ -42,7 +41,7 @@ final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
         @Atomic var concurrentlyRunning = 0
 
         let drainer = StaticAsyncWorkPoolDrainer<Int, Void>(stack: 0..<1024,
-                                                           maxConcurrentOperationCount: 5) { int in
+                                                            maxConcurrentOperationCount: 5) { int in
             _concurrentlyRunning.mutate { counter in
                 counter += 1
             }

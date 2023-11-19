@@ -2,6 +2,7 @@ import Foundation
 
 public enum WorkPoolDrainerError: Error {
     case cancelled
+    case poolIntakeAlreadyClosed
 }
 
 public protocol WorkPoolDrainer<Element>: AsyncSequence {

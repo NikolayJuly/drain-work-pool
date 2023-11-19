@@ -79,7 +79,7 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
         defer { internalStateLock.unlock() }
         isSealed = true
 
-        if producers.isEmpty {
+        if producers.isEmpty, currentRunningOperationsCount == 0 {
             let waiters = self.updateWaiters
             self.updateWaiters.removeAll()
             Task.detached {

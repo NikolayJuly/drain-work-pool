@@ -38,12 +38,13 @@ final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
 
     func testMacConcurrentExecution() async throws {
 
-        @Atomic var concurrentlyRunning = 0
+        @Atomic var concurrentlyRunning: Int = 0
 
         let drainer = StaticAsyncWorkPoolDrainer<Int, Void>(stack: 0..<1024,
                                                             maxConcurrentOperationCount: 5) { int in
-            _concurrentlyRunning.mutate { counter in
-                counter += 1
+            _concurrentlyRunning.increment()
+            defer {
+                _concurrentlyRunning.decrement()
             }
 
             XCTAssertTrue(concurrentlyRunning <= 5)
@@ -53,9 +54,6 @@ final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
             }
 
             XCTAssertTrue(concurrentlyRunning <= 5)
-            _concurrentlyRunning.mutate { counter in
-                counter -= 1
-            }
         }
 
         try await drainer.wait()

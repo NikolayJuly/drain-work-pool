@@ -30,6 +30,7 @@ final class PosixLock {
     ///
     /// Whenever possible, consider using `withLock` instead of this method and
     /// `unlock`, to simplify lock handling.
+    @available(*, noasync)
     func lock() {
         let err = pthread_mutex_lock(self.mutex)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
@@ -39,8 +40,17 @@ final class PosixLock {
     ///
     /// Whenver possible, consider using `withLock` instead of this method and
     /// `lock`, to simplify lock handling.
+    @available(*, noasync)
     func unlock() {
         let err = pthread_mutex_unlock(self.mutex)
         precondition(err == 0, "\(#function) failed in pthread_mutex with error \(err)")
+    }
+
+    func withLock<R>(_ closure: () throws -> R) rethrows -> R {
+        lock()
+        defer {
+            unlock()
+        }
+        return try closure()
     }
 }

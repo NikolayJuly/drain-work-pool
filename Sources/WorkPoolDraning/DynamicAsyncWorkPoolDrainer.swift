@@ -38,16 +38,15 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
 
     /// Order of execution and order of results are not guaranteed
     public func add(_ work: @Sendable @escaping () async throws -> T) throws {
-        internalStateLock.lock()
-        defer { internalStateLock.unlock() }
-
-        switch state {
-        case .completed:
-            throw WorkPoolDrainerError.poolIntakeAlreadyClosed
-        case .draining:
-            producers.append(work)
-        case .failed:
-            return
+        try internalStateLock.withLock {
+            switch state {
+            case .completed:
+                throw WorkPoolDrainerError.poolIntakeAlreadyClosed
+            case .draining:
+                producers.append(work)
+            case .failed:
+                return
+            }
         }
 
         Task.detached {
@@ -56,23 +55,21 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
     }
 
     public func addMany(_ works: [@Sendable () async throws -> T]) throws {
-        internalStateLock.lock()
-        defer { internalStateLock.unlock() }
-
-        switch state {
-        case .completed:
-            throw WorkPoolDrainerError.poolIntakeAlreadyClosed
-        case .draining:
-            producers.append(contentsOf: works)
-        case .failed:
-            return
+        try internalStateLock.withLock {
+            switch state {
+            case .completed:
+                throw WorkPoolDrainerError.poolIntakeAlreadyClosed
+            case .draining:
+                producers.append(contentsOf: works)
+            case .failed:
+                return
+            }
         }
 
         Task.detached {
             self.checkForAvailableSlot()
         }
     }
-
 
     public func closeIntake() {
         internalStateLock.lock()
@@ -118,7 +115,6 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
 
         return try block(self)
     }
-
 
     // MARK: ThreadUnsafeDrainer
 
@@ -188,42 +184,39 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
             result = .failure(exc)
         }
 
-        internalStateLock.lock()
-        defer { internalStateLock.unlock() }
+        internalStateLock.withLock {
+            precondition(currentRunningOperationsCount > 0)
+            currentRunningOperationsCount -= 1
 
-        precondition(currentRunningOperationsCount > 0)
-        currentRunningOperationsCount -= 1
-
-        switch state {
-        case .failed:
-            return
-        case .completed:
-            fatalError("Must never happen at this state")
-        case .draining:
-            switch result {
-            case let .success(t):
-                self.storage.append(t)
-            case let .failure(error):
-                self.state = .failed(error)
-                self.producers.removeAll()
-            }
-
-            let waiters = self.updateWaiters
-            self.updateWaiters.removeAll()
-
-            let optionalResult = result.map { $0 as T? }
-
-            Task.detached {
-                waiters.forEach { $0(optionalResult) }
-            }
-
-            if case .failure = result {
+            switch state {
+            case .failed:
                 return
+            case .completed:
+                fatalError("Must never happen at this state")
+            case .draining:
+                switch result {
+                case let .success(t):
+                    self.storage.append(t)
+                case let .failure(error):
+                    self.state = .failed(error)
+                    self.producers.removeAll()
+                }
+
+                let waiters = self.updateWaiters
+                self.updateWaiters.removeAll()
+
+                let optionalResult = result.map { $0 as T? }
+
+                Task.detached {
+                    waiters.forEach { $0(optionalResult) }
+                }
+
+                if case .failure = result {
+                    return
+                }
             }
         }
 
-        Task.detached {
-            self.checkForAvailableSlot()
-        }
+        checkForAvailableSlot()
     }
 }

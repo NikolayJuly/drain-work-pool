@@ -47,3 +47,17 @@ final class Atomic<T>: @unchecked Sendable {
     @usableFromInline private(set) var _wrappedValue: T
     @usableFromInline let lock = PosixLock()
 }
+
+extension Atomic where T == Int {
+    func increment(on value: Int = 1) {
+        mutate { wrapped in
+            wrapped += value
+        }
+    }
+
+    func decrement(on value: Int = 1) {
+        mutate { wrapped in
+            wrapped -= value
+        }
+    }
+}

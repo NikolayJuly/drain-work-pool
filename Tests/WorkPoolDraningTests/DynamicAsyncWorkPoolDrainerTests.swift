@@ -39,12 +39,24 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
     }
 
     func testAddMoreWorkAfterCompleteInitialDraining() async throws {
+        @Atomic var concurrentlyRunning: Int = 0
+        
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 20)
         for i in 0..<1024 {
-            try pool.add {
+            try pool.add { [_concurrentlyRunning] in
+                _concurrentlyRunning.increment()
+                defer {
+                    _concurrentlyRunning.decrement()
+                }
+
+                XCTAssertTrue(_concurrentlyRunning.wrappedValue <= 20)
+
                 if Bool.random() {
                     try await Task.sleep(nanoseconds: 500)
                 }
+
+                XCTAssertTrue(_concurrentlyRunning.wrappedValue <= 20)
+
                 return i
             }
         }

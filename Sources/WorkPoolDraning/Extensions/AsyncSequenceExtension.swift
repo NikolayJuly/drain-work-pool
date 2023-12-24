@@ -1,8 +1,8 @@
 import Foundation
 
 extension AsyncSequence {
-    /// Process items, as they arrive, limiting max concurrent operation count
-    /// - note: `process` might be called not in order of a source sequence
+    /// Process items, as they arrive, limiting max concurrent operation count.
+    /// - note: `process` might be called not in order of a source sequence.
     func process<T>(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
                     process: @escaping (Element) async throws -> T) async throws -> [T] {
         let poolDrainer = DynamicAsyncWorkPoolDrainer<T>(maxConcurrentOperationCount: maxConcurrentOperationCount)

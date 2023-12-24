@@ -28,7 +28,7 @@ Why do we need this package, if we have TaskGroup?
 
 - Internet bandwidth is limited, no reason to trigger unlimited amount of connections
 - Storage bandwidth is limited, no reason to start thousands of read/write operations at the same time
-- Needs to limit CPU usage, becase you need to use mac, while it executes long running tasks in background
+- Needs to limit CPU usage, because you need to use mac, while it executes long running tasks in background
 - Define QoS not always enough, as you might want to have more control over number of simultaneous executions and do not depend on QoS evristics
 
 ## Topics

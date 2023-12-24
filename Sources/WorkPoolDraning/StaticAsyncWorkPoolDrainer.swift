@@ -1,9 +1,9 @@
 import Foundation
 
-/// Executed async process block on predefined stack of elements, limiting number of simultanious executions
+/// Executed async process block on predefined stack of elements, limiting number of simultaneous executions
 ///
-/// In some cases, we need execute many heavy tasks and we want limit number of simultanious executions
-/// `TaskGroup` execute all given tasks simultaniously, so it is not suitable for this scenario
+/// In some cases, we need execute many heavy tasks and we want limit number of simultaneous executions
+/// `TaskGroup` execute all given tasks simultaneously, so it is not suitable for this scenario
 ///
 /// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainerError.cancelled` in iterator
 ///

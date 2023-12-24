@@ -1,12 +1,12 @@
 import Foundation
 
-/// Drain dynamicly sized pool of work, limiting number of simultanious executions
+/// Drain dynamically sized pool of work, limiting number of simultaneous executions
 ///
-/// In some cases, we need execute many heavy tasks and we want limit number of simultanious executions
-/// `TaskGroup` execute all given tasks simultaniously, so it is not suitable for this scenario
+/// In some cases, we need execute many heavy tasks and we want limit number of simultaneous executions
+/// `TaskGroup` execute all given tasks simultaneously, so it is not suitable for this scenario
 ///
 /// `DynamicAsyncWorkPoolDrainer` allow to add work dynamically. Even if atm it was drained, you still can add more work and iterate later over all resutls.
-///  But if one or tasks failed ot draining was cancelled - no new work will be added
+///  But if at least one task failed, draining was cancelled or intake closed - no new work will be added
 ///
 /// If drain will be cancelled, it will throw `WorkPoolDrainerError.cancelled` in iterator. This happens even if all current tasks completed
 ///

@@ -4,8 +4,8 @@ import XCTest
 
 final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
 
-    // This test do not gurantee that `AsyncOperationsPool` works as expected. Better run few times
-    // From other side - if it failes - we have an issue for sure
+    // This test do not guarantee that `AsyncOperationsPool` works as expected. Better run few times
+    // From other side - if it fails - we have an issue for sure
     func testIntProcessingAndAddWorkDuringDraining() async throws {
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 20)
         for i in 0..<1024 {

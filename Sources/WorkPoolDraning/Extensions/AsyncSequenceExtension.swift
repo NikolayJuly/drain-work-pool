@@ -1,7 +1,7 @@
 import Foundation
 
 extension AsyncSequence {
-    /// Process items, as they arraive, limiting max concurrent operation count
+    /// Process items, as they arrive, limiting max concurrent operation count
     /// - note: `process` might be called not in order of a source sequence
     func process<T>(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
                     process: @escaping (Element) async throws -> T) async throws -> [T] {

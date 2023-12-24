@@ -12,7 +12,7 @@ protocol ThreadSafeDrainer<Output>: AnyObject {
 
     associatedtype Output
 
-    /// `ThreadUnsafeDrainer` sould not be used outside of block
+    /// `ThreadUnsafeDrainer` should not be used outside of block
     func executeBehindLock<T>(_ block: (any ThreadUnsafeDrainer<Output>) throws -> T) rethrows -> T
 }
 
@@ -39,11 +39,11 @@ public struct AsyncDrainerIterator<T>: AsyncIteratorProtocol {
 
         typealias Touple = (result: Result<Element?, Error>?, continuation: CheckedContinuation<Element?, Error>?)
 
-        @Atomic var touple: Touple = (nil, nil)
+        @Atomic var tuple: Touple = (nil, nil)
 
         // It will be called separately from continuation and from drainer update, it will resume continuation when both call happens
         let update: (Result<Element?, Error>?, CheckedContinuation<Element?, Error>?) -> Void = { result, continuation in
-            _touple.mutate { currentTuple in
+            _tuple.mutate { currentTuple in
                 currentTuple.result = result ?? currentTuple.result
                 currentTuple.continuation = continuation ?? currentTuple.continuation
                 guard let result = currentTuple.result,

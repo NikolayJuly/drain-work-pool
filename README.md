@@ -4,6 +4,22 @@
 
 This package aim to help with execution of big amount of tasks, but limit number of simultaneously executed tasks.
 
+## Installation
+
+```
+dependencies: [
+    .package(url: "https://github.com/NikolayJuly/drain-work-pool.git", from: "3.0.0"),
+]
+```
+
+Include "WorkPoolDraning" as a dependency for your target:
+
+```
+.target(name: "<target>", dependencies: [
+    .product(name: "WorkPoolDraning", package: "drain-work-pool"),
+]),
+```
+
 ## Overview
 
 Package provides few work pools, depending on knowledge of input tasks beforehand. 
@@ -21,6 +37,14 @@ Decision tree:
 - Static + DispatchQueue: ``StaticSyncWorkPoolDrainer``
 - Static + Structured Concurrency: ``StaticAsyncWorkPoolDrainer``
 - Dynamic + Structured Concurrency: ``DynamicAsyncWorkPoolDrainer``
+
+## Process existed collection
+
+Also you can use `process` method on `Collection` or `AsyncSequence`. 
+Keep in mind that clousre might be called in random order, depending on an execution speed of each process call.
+```
+try await array.process(limitingMaxConcurrentOperationCountTo: 5, { ... })
+```
 
 ## Why?
 

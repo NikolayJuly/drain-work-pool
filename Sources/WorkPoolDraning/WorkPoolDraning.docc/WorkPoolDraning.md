@@ -20,6 +20,14 @@ Decision tree:
 - Static + Structured Concurrency: ``StaticAsyncWorkPoolDrainer``
 - Dynamic + Structured Concurrency: ``DynamicAsyncWorkPoolDrainer``
 
+## Process existed collection
+
+Also you can use `process` method on `Collection` or `AsyncSequence`. 
+Keep in mind that clousre might be called in random order, depending on an execution speed of each process call.
+```
+try await array.process(limitingMaxConcurrentOperationCountTo: 5, { ... })
+```
+
 ## Why?
 
 Why do we need this package, if we have TaskGroup?
@@ -38,3 +46,4 @@ Why do we need this package, if we have TaskGroup?
 - ``DynamicAsyncWorkPoolDrainer``
 - ``StaticAsyncWorkPoolDrainer``
 - ``StaticSyncWorkPoolDrainer``
+

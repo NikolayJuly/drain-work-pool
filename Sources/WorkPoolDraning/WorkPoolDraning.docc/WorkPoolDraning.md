@@ -23,7 +23,7 @@ Decision tree:
 ## Process existed collection
 
 Also you can use `process` method on `Collection` or `AsyncSequence`. 
-Keep in mind that clousre might be called in random order, depending on an execution speed of each process call.
+Keep in mind that closure might be called in random order, depending on an execution speed of each process call.
 ```
 try await array.process(limitingMaxConcurrentOperationCountTo: 5, { ... })
 ```

@@ -16,7 +16,7 @@ public protocol WorkPoolDrainer<Element>: AsyncSequence {
     /// - note: if drainer was stopped, iterators will throw ``WorkPoolDrainerError/cancelled``
     func cancel()
 
-    /// Itereate over all elements and return them as an Array
+    /// Iterate over all elements and return them as an Array
     func collect() async throws -> [Element]
 }
 

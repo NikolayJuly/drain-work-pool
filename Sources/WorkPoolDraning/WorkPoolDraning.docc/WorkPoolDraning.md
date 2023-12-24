@@ -20,6 +20,14 @@ Decision tree:
 - Static + Structured Concurrency: ``StaticAsyncWorkPoolDrainer``
 - Dynamic + Structured Concurrency: ``DynamicAsyncWorkPoolDrainer``
 
+## Process existed collection
+
+Also you can use `process` method on `Collection` or `AsyncSequence`. 
+Keep in mind that clousre might be called in random order, depending on an execution speed of each process call.
+```
+try await array.process(limitingMaxConcurrentOperationCountTo: 5, { ... })
+```
+
 ## Why?
 
 Why do we need this package, if we have TaskGroup?
@@ -28,7 +36,7 @@ Why do we need this package, if we have TaskGroup?
 
 - Internet bandwidth is limited, no reason to trigger unlimited amount of connections
 - Storage bandwidth is limited, no reason to start thousands of read/write operations at the same time
-- Needs to limit CPU usage, becase you need to use mac, while it executes long running tasks in background
+- Needs to limit CPU usage, because you need to use mac, while it executes long running tasks in background
 - Define QoS not always enough, as you might want to have more control over number of simultaneous executions and do not depend on QoS evristics
 
 ## Topics
@@ -38,3 +46,4 @@ Why do we need this package, if we have TaskGroup?
 - ``DynamicAsyncWorkPoolDrainer``
 - ``StaticAsyncWorkPoolDrainer``
 - ``StaticSyncWorkPoolDrainer``
+

@@ -3,8 +3,8 @@ import XCTest
 @testable import WorkPoolDraning
 
 final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
-    // This test do not gurantee that `StaticSyncWorkPoolDrainer` works as expected. Better run few times
-    // From other side - if it failes - we have an issue for sure
+    // This test do not guarantee that `StaticSyncWorkPoolDrainer` works as expected. Better run few times
+    // From other side - if it fails - we have an issue for sure
     func testIntProcessing() async throws {
 
         @Atomic var processIntsArray = [Int]()

@@ -1,10 +1,10 @@
 import Dispatch
 import Foundation
 
-/// Executed sync process block on predefined stack of elements, limiting number of simultanious executions
+/// Executed sync process block on predefined stack of elements, limiting number of simultaneous executions
 ///
-/// Execute heavy operations on given stack of items with limit on number of simultanious execution.
-/// Build on DispatchQueue concepts. Limit of simultanious execution is defined by number of serial queues created inside (or provided in init)
+/// Execute heavy operations on given stack of items with limit on number of simultaneous execution.
+/// Build on DispatchQueue concepts. Limit of simultaneous execution is defined by number of serial queues created inside (or provided in init)
 /// This class useful when work on each element can be presented as sync block and amount of work known in advance
 ///
 /// If drain will be cancelled in the middle of process, it will throw `WorkPoolDrainerError.cancelled` in iterator

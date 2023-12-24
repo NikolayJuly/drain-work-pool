@@ -35,8 +35,8 @@ public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @un
             { try await process(element) }
         }
 
-        // Use `!`, because I know that it will throw ONLY if we already closed intake
-        try! pool.addMany(works)
+        // Use `?`, because I know that it will throw ONLY if we already closed intake
+        try? pool.addMany(works)
         pool.closeIntake()
     }
 

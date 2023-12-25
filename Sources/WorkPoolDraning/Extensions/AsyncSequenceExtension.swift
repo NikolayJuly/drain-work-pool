@@ -19,4 +19,20 @@ public extension AsyncSequence {
 
         return try await poolDrainer.collect()
     }
+
+    func process(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
+                 process: @escaping (Element) async throws -> Void) async throws {
+        let poolDrainer = DynamicAsyncWorkPoolDrainer<Void>(maxConcurrentOperationCount: maxConcurrentOperationCount)
+
+        for try await element in self {
+            // use '?', because I know that it throw only when we already closed intake
+            try? poolDrainer.add {
+                try await process(element)
+            }
+        }
+
+        poolDrainer.closeIntake()
+
+        try await poolDrainer.wait()
+    }
 }

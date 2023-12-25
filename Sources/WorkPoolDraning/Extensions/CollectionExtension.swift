@@ -2,6 +2,7 @@ import Foundation
 
 public extension Collection {
     /// Process collection.
+    /// - Returns: Array of results, order might be different form order in source collection.
     /// - note: `process` might be called not in order of a collection.
     func process<T>(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
                     process: @escaping (Element) async throws -> T) async throws -> [T]  {

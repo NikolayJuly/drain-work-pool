@@ -83,6 +83,35 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
 
         XCTAssertEqual(resArray.count, 1032)
     }
+
+    func test_addMany_SpawnsManySubtasks() async throws {
+        let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 5)
+
+        @Atomic var concurrentlyRunning: Int = 0
+
+        typealias Work = @Sendable () async throws -> Int
+
+        let waiters = (0...10).map {
+            (AsyncValueWaiter<Int>(), $0)
+        }
+
+        let manyWorks: [Work] = waiters.map { [_concurrentlyRunning] tuple in
+                let work: Work = {
+                    _concurrentlyRunning.increment()
+                    return await tuple.0.value
+                }
+                return work
+            }
+
+        try pool.addMany(manyWorks)
+
+        let waitFor5Tasks = XCTestExpectation(predicate: { _concurrentlyRunning.wrappedValue == 5 })
+        await fulfillment(of: [waitFor5Tasks], timeout: 1)
+
+        for element in waiters {
+            await element.0.set(element.1)
+        }
+    }
 }
 
 

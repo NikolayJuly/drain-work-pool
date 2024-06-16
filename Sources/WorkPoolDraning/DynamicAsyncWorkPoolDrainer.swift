@@ -66,8 +66,10 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
             }
         }
 
-        Task.detached {
-            self.checkForAvailableSlot()
+        (0..<maxConcurrentOperationCount).forEach { _ in
+            Task.detached {
+                self.checkForAvailableSlot()
+            }
         }
     }
 

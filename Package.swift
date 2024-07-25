@@ -13,11 +13,15 @@ let package = Package(
             name: "WorkPoolDraning",
             targets: ["WorkPoolDraning"]),
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/vsanthanam/AnyAsyncSequence.git", from: "1.0.0")
+    ],
     targets: [
         .target(
             name: "WorkPoolDraning",
-            dependencies: []),
+            dependencies: [
+                .product(name: "AnyAsyncSequence", package: "AnyAsyncSequence")
+            ]),
         .testTarget(
             name: "WorkPoolDraningTests",
             dependencies: ["WorkPoolDraning"]),

@@ -1,16 +1,15 @@
 import Foundation
 
-public extension AsyncSequence {
+public extension AsyncSequence where Element: Sendable {
     /// Process items, as they arrive, limiting max concurrent operation count.
     /// - Returns: Array of results, order might be different form order in source collection.
     /// - note: `process` might be called not in order of a source sequence.
-    func process<T>(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
-                    process: @escaping (Element) async throws -> T) async throws -> [T] {
+    func process<T: Sendable>(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
+                              process: @escaping @Sendable (Element) async throws -> T) async throws -> [T] {
         let poolDrainer = DynamicAsyncWorkPoolDrainer<T>(maxConcurrentOperationCount: maxConcurrentOperationCount)
 
         for try await element in self {
-            // use '?', because I know that it throw only when we already closed intake
-            try? poolDrainer.add {
+            poolDrainer.add {
                 try await process(element)
             }
         }
@@ -21,12 +20,11 @@ public extension AsyncSequence {
     }
 
     func process(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
-                 process: @escaping (Element) async throws -> Void) async throws {
+                 process: @escaping @Sendable (Element) async throws -> Void) async throws {
         let poolDrainer = DynamicAsyncWorkPoolDrainer<Void>(maxConcurrentOperationCount: maxConcurrentOperationCount)
 
         for try await element in self {
-            // use '?', because I know that it throw only when we already closed intake
-            try? poolDrainer.add {
+            poolDrainer.add {
                 try await process(element)
             }
         }

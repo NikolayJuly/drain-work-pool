@@ -24,8 +24,9 @@ import Foundation
 /// ```
 ///
 /// - note: Order of iteration might be different from order of added work, because each process might take different amount of time and we prefer to provide result ASAP
-public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sendable,
-                                                   ThreadSafeDrainer, ThreadUnsafeDrainer, WorkPoolDrainer {
+public final class DynamicAsyncWorkPoolDrainer<T: Sendable>: AsyncSequence, Sendable, WorkPoolDrainer {
+
+    public typealias Work = @Sendable () async throws -> T
 
     public typealias Element = T
 
@@ -34,191 +35,69 @@ public final class DynamicAsyncWorkPoolDrainer<T>: AsyncSequence, @unchecked Sen
     public init(maxConcurrentOperationCount: Int) {
         precondition(maxConcurrentOperationCount > 0)
         self.maxConcurrentOperationCount = maxConcurrentOperationCount
+        self.innerState = InnerState(orderMode: .fifo, limit: .maxConcurrentOperationCount(maxConcurrentOperationCount))
     }
 
-    /// Order of execution and order of results are not guaranteed
-    public func add(_ work: @Sendable @escaping () async throws -> T) throws {
-        try internalStateLock.withLock {
-            switch state {
-            case .completed:
-                throw WorkPoolDrainerError.poolIntakeAlreadyClosed
-            case .draining:
-                producers.append(work)
-            case .failed:
-                return
-            }
-        }
-
+    public func add(_ work: @escaping Work) {
+        innerState.addProducers([work])
         Task.detached {
-            self.checkForAvailableSlot()
+            await self.checkForAvailableSlot()
         }
     }
 
-    public func addMany(_ works: [@Sendable () async throws -> T]) throws {
-        try internalStateLock.withLock {
-            switch state {
-            case .completed:
-                throw WorkPoolDrainerError.poolIntakeAlreadyClosed
-            case .draining:
-                producers.append(contentsOf: works)
-            case .failed:
-                return
-            }
-        }
+    public func addMany(_ works: [Work]) {
+        innerState.addProducers(works)
 
         (0..<maxConcurrentOperationCount).forEach { _ in
             Task.detached {
-                self.checkForAvailableSlot()
+                await self.checkForAvailableSlot()
             }
         }
     }
 
     public func closeIntake() {
-        internalStateLock.lock()
-        defer { internalStateLock.unlock() }
-        isSealed = true
-
-        if producers.isEmpty, currentRunningOperationsCount == 0 {
-            let waiters = self.updateWaiters
-            self.updateWaiters.removeAll()
-            Task.detached {
-                waiters.forEach { $0(.success(nil)) }
-            }
-            self.state = .completed
-        }
+        innerState.seal()
     }
 
+    /// Destructive action, it will prevent any future work and stop all iteration with error.
+    /// Any future iteration will fail immediately..
     public func cancel() {
-        internalStateLock.lock()
-        defer { internalStateLock.unlock() }
-        self.state = .failed(WorkPoolDrainerError.cancelled)
-        self.producers.removeAll()
-        let waiters = self.updateWaiters
-        self.updateWaiters.removeAll()
-        Task.detached {
-            waiters.forEach { $0(.failure(WorkPoolDrainerError.cancelled)) }
-        }
+        innerState.fail(WorkPoolDrainerError.cancelled)
     }
 
     // MARK: AsyncSequence
 
     public func makeAsyncIterator() -> AsyncIterator {
-        AsyncDrainerIterator(self)
-    }
-
-    // MARK: ThreadSafeDrainer
-
-    typealias Output = T
-    let internalStateLock = PosixLock()
-
-    func executeBehindLock<P>(_ block: (any ThreadUnsafeDrainer<T>) throws -> P) rethrows -> P {
-        internalStateLock.lock()
-        defer { internalStateLock.unlock() }
-
-        return try block(self)
-    }
-
-    // MARK: ThreadUnsafeDrainer
-
-    private(set) var state: DrainerState = .draining
-
-    private var storage = [T]()
-
-    var updateWaiters = [UpdateWaiter<T>]()
-
-    subscript(index: Int) -> T? {
-        storage.count > index ? storage[index] : nil
+        AsyncDrainerIterator(innerState)
     }
 
     // MARK: Private
 
     private let maxConcurrentOperationCount: Int
+    private let innerState: InnerState<T, Work>
 
-    private var producers = [@Sendable () async throws -> T]()
-
-    private var currentRunningOperationsCount: Int = 0
-
-    private var isSealed: Bool = false
-
-    private func checkForAvailableSlot() {
-        internalStateLock.lock()
-        defer { internalStateLock.unlock() }
-
-        switch state {
-        case .failed:
+    private func checkForAvailableSlot() async {
+        let availability = innerState.nextWorkAvailability()
+        let work: Work
+        let index: Int
+        switch availability {
+        case .atCapacity, .finished:
             return
-        case .completed:
-            return
-        case .draining:
-            break
+        case let .work(w, i):
+            work = w
+            index = i
         }
-
-        guard currentRunningOperationsCount < maxConcurrentOperationCount else {
-            return
-        }
-
-        guard let producer = producers.popFirst() else {
-            if currentRunningOperationsCount == 0, isSealed {
-                self.state = .completed
-                let waiters = self.updateWaiters
-                self.updateWaiters.removeAll()
-                Task.detached {
-                    waiters.forEach { $0(.success(nil)) }
-                }
-            }
-            return
-        }
-
-        currentRunningOperationsCount += 1
-
-        Task.detached {
-            await self.produce(from: producer)
-        }
-    }
-
-    private func produce(from producer: () async throws -> T) async {
-        let result: Result<T, Error>
 
         do {
-            let t = try await producer()
-            result = .success(t)
-        } catch let exc {
-            result = .failure(exc)
+            let t = try await work()
+            innerState.workCompleted(for: index, result: t)
+        } catch {
+            innerState.fail(error)
         }
 
-        internalStateLock.withLock {
-            precondition(currentRunningOperationsCount > 0)
-            currentRunningOperationsCount -= 1
-
-            switch state {
-            case .failed:
-                return
-            case .completed:
-                fatalError("Must never happen at this state")
-            case .draining:
-                switch result {
-                case let .success(t):
-                    self.storage.append(t)
-                case let .failure(error):
-                    self.state = .failed(error)
-                    self.producers.removeAll()
-                }
-
-                let waiters = self.updateWaiters
-                self.updateWaiters.removeAll()
-
-                let optionalResult = result.map { $0 as T? }
-
-                Task.detached {
-                    waiters.forEach { $0(optionalResult) }
-                }
-
-                if case .failure = result {
-                    return
-                }
-            }
+        Task.detached {
+            await self.checkForAvailableSlot()
         }
-
-        checkForAvailableSlot()
     }
 }
+

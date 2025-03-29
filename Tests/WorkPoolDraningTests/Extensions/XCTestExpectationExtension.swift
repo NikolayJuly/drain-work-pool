@@ -3,7 +3,7 @@ import XCTest
 
 public extension XCTestExpectation {
     convenience init(checkInterval: TimeInterval = 0.05,
-                     predicate: @escaping () -> Bool,
+                     predicate: @escaping @Sendable () -> Bool,
                      dispatchQueue: DispatchQueue = .main,
                      description: String = "Periodic check expectation") {
         self.init(description: description)
@@ -23,7 +23,7 @@ public extension XCTestExpectation {
 
     private func scheduleNextCheck(dispatchQueue: DispatchQueue,
                                    checkInterval: TimeInterval,
-                                   predicate: @escaping () -> Bool) {
+                                   predicate: @escaping @Sendable () -> Bool) {
         dispatchQueue.asyncAfter(deadline: .now() + checkInterval) { [weak self] in
             guard let self = self else { return }
             if predicate() {

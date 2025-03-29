@@ -7,16 +7,18 @@ final class Atomic<T>: @unchecked Sendable {
     var wrappedValue: T {
         get {
             lock.lock()
-            defer {
-                lock.unlock()
-            }
+            defer { lock.unlock() }
             return _wrappedValue
         }
         set {
             lock.lock()
+            defer { lock.unlock() }
             _wrappedValue = newValue
-            lock.unlock()
         }
+    }
+
+    init(_ t: T) {
+        self._wrappedValue = t
     }
 
     init(wrappedValue: T) {
@@ -59,5 +61,36 @@ extension Atomic where T == Int {
         mutate { wrapped in
             wrapped -= value
         }
+    }
+}
+
+extension Atomic: ExpressibleByBooleanLiteral where T == Bool {
+    typealias BooleanLiteralType = Bool
+
+    convenience init(booleanLiteral value: Bool) {
+        self.init(value)
+    }
+}
+
+extension Atomic: ExpressibleByIntegerLiteral where T == Int {
+    typealias IntegerLiteralType = Int
+
+    convenience init(integerLiteral value: Int) {
+        self.init(value)
+    }
+}
+
+extension Atomic: ExpressibleByArrayLiteral where T: RangeReplaceableCollection {
+    typealias ArrayLiteralElement = T.Element
+
+    convenience init(arrayLiteral elements: T.Element...) {
+        let t = T(elements)
+        self.init(t)
+    }
+}
+
+extension Atomic {
+    convenience init<K>() where T == Optional<K> {
+        self.init(nil)
     }
 }

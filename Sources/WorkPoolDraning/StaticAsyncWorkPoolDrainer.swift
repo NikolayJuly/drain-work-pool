@@ -19,7 +19,7 @@ import Foundation
 /// ```
 ///
 /// - note: Order of iteration might be different from order of input stack, because each process might take different amount of time and we prefer to provide result ASAP
-public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @unchecked Sendable, WorkPoolDrainer {
+public final class StaticAsyncWorkPoolDrainer<Input: Sendable, Output: Sendable>: AsyncSequence, Sendable, WorkPoolDrainer {
 
     public typealias Element = Output
 
@@ -27,7 +27,7 @@ public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @un
 
     public init(stack: some Collection<Input>,
                 maxConcurrentOperationCount: Int,
-                process: @escaping (Input) async throws -> Output) {
+                process: @escaping @Sendable (Input) async throws -> Output) {
         precondition(maxConcurrentOperationCount > 0)
         self.pool = DynamicAsyncWorkPoolDrainer(maxConcurrentOperationCount: maxConcurrentOperationCount)
 
@@ -35,25 +35,11 @@ public final class StaticAsyncWorkPoolDrainer<Input, Output>: AsyncSequence, @un
             { try await process(element) }
         }
 
-        // Use `?`, because I know that it will throw ONLY if we already closed intake
-        try? pool.addMany(works)
+        pool.addMany(works)
         pool.closeIntake()
     }
 
     public func cancel() {
-        let alreadyCompleted = pool.executeBehindLock { unsafeDrainer in
-            switch unsafeDrainer.state {
-            case .completed, .failed:
-                return true
-            case .draining:
-                return false
-            }
-        }
-
-        guard !alreadyCompleted else {
-            return
-        }
-
         pool.cancel()
     }
 

@@ -9,7 +9,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
     func testIntProcessingAndAddWorkDuringDraining() async throws {
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 20)
         for i in 0..<1024 {
-            try pool.add {
+            pool.add {
                 if Bool.random() {
                     try await Task.sleep(nanoseconds: 500)
                 }
@@ -21,7 +21,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
         for try await i in pool {
             resArray.append(i)
             if i % 128 == 0 {
-                try pool.add { 1024 + i/128 }
+                pool.add { 1024 + i/128 }
             }
 
             if i == 1024 {
@@ -43,7 +43,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
         
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 20)
         for i in 0..<1024 {
-            try pool.add { [_concurrentlyRunning] in
+            pool.add { [_concurrentlyRunning] in
                 _concurrentlyRunning.increment()
                 defer {
                     _concurrentlyRunning.decrement()
@@ -68,7 +68,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
             if i == 1023 {
                 DispatchQueue.global().asyncAfter(deadline: .now() + .nanoseconds(500)) {
                     for i in 0..<8 {
-                        try? pool.add { 1024 + i }
+                        pool.add { 1024 + i }
                     }
                     pool.closeIntake()
                 }
@@ -87,12 +87,12 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
     func test_addMany_SpawnsManySubtasks() async throws {
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 5)
 
-        @Atomic var concurrentlyRunning: Int = 0
+        let _concurrentlyRunning: Atomic<Int> = 0
 
         typealias Work = @Sendable () async throws -> Int
 
         let waiters = (0...10).map {
-            (AsyncValueWaiter<Int>(), $0)
+            (ValueWaiter<Int>(), $0)
         }
 
         let manyWorks: [Work] = waiters.map { [_concurrentlyRunning] tuple in
@@ -103,7 +103,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
                 return work
             }
 
-        try pool.addMany(manyWorks)
+        pool.addMany(manyWorks)
 
         let waitFor5Tasks = XCTestExpectation(predicate: { _concurrentlyRunning.wrappedValue == 5 })
         await fulfillment(of: [waitFor5Tasks], timeout: 1)

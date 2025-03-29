@@ -7,7 +7,7 @@ final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
     // From other side - if it fails - we have an issue for sure
     func testIntProcessing() async throws {
 
-        @Atomic var processIntsArray = [Int]()
+        let _processIntsArray: Atomic<[Int]> = []
 
         let drainer = StaticAsyncWorkPoolDrainer<Int, Int>(stack: 0..<1024,
                                                            maxConcurrentOperationCount: 20) { int in
@@ -25,20 +25,20 @@ final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
             resIntsArray.append(i)
         }
 
-        let processIntsSet = Set(processIntsArray)
+        let processIntsSet = Set(_processIntsArray.wrappedValue)
         let resIntsSet = Set(resIntsArray)
 
         let ferSet = Set(0..<1024)
         XCTAssertEqual(resIntsSet, ferSet)
         XCTAssertEqual(processIntsSet, ferSet)
 
-        XCTAssertEqual(processIntsArray.count, 1024)
+        XCTAssertEqual(_processIntsArray.wrappedValue.count, 1024)
         XCTAssertEqual(resIntsSet.count, 1024)
     }
 
     func testMacConcurrentExecution() async throws {
 
-        @Atomic var concurrentlyRunning: Int = 0
+        let _concurrentlyRunning: Atomic<Int> = 0
 
         let drainer = StaticAsyncWorkPoolDrainer<Int, Void>(stack: 0..<1024,
                                                             maxConcurrentOperationCount: 5) { int in
@@ -47,13 +47,13 @@ final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
                 _concurrentlyRunning.decrement()
             }
 
-            XCTAssertTrue(concurrentlyRunning <= 5)
+            XCTAssertTrue(_concurrentlyRunning.wrappedValue <= 5)
 
             if Bool.random() {
                 try await Task.sleep(nanoseconds: 500)
             }
 
-            XCTAssertTrue(concurrentlyRunning <= 5)
+            XCTAssertTrue(_concurrentlyRunning.wrappedValue <= 5)
         }
 
         try await drainer.wait()

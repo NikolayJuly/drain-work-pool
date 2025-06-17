@@ -1,5 +1,14 @@
 import Foundation
 
+
+public enum OrderMode {
+    /// In this mode, the iterator returns results in the order in which processor blocks complete, not the order of processors in the array.
+    case fifo
+
+    /// In this mode, the iterator will receive elements in the same order as the processors were added to the pool.
+    case keepOriginalOrder
+}
+
 /// Drain dynamically sized pool of work, limiting number of simultaneous executions
 ///
 /// In some cases, we need execute many heavy tasks and we want limit number of simultaneous executions
@@ -32,10 +41,10 @@ public final class DynamicAsyncWorkPoolDrainer<T: Sendable>: AsyncSequence, Send
 
     public typealias AsyncIterator = AsyncDrainerIterator<Element>
 
-    public init(maxConcurrentOperationCount: Int) {
+    public init(maxConcurrentOperationCount: Int, resultsOrder: OrderMode = .fifo) {
         precondition(maxConcurrentOperationCount > 0)
         self.maxConcurrentOperationCount = maxConcurrentOperationCount
-        self.innerState = InnerState(resultsOrder: .fifo, limit: .maxConcurrentOperationCount(maxConcurrentOperationCount))
+        self.innerState = InnerState(resultsOrder: resultsOrder, limit: .maxConcurrentOperationCount(maxConcurrentOperationCount))
     }
 
     public func add(_ work: @escaping Work) {

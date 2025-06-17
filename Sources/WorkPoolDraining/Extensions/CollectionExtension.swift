@@ -13,6 +13,16 @@ public extension Collection where Element: Sendable {
         return try await drainer.collect()
     }
 
+    /// Process collection.
+    /// - Returns: `WorkPoolDrainer<T>`, order might be different form order in source collection.
+    /// - note: `process` might be called not in order of a collection.
+    func process<T: Sendable>(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
+                              process: @escaping @Sendable (Element) async throws -> T) -> any WorkPoolDrainer<T>  {
+        StaticAsyncWorkPoolDrainer(stack: self, maxConcurrentOperationCount: maxConcurrentOperationCount) { element in
+            try await process(element)
+        }
+    }
+
     /// Process collection. Wait till all item processed and after this return.
     /// - note: `process` might be called not in order of a collection.
     func process(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
@@ -23,4 +33,14 @@ public extension Collection where Element: Sendable {
 
         try await drainer.wait()
     }
+
+    /// Map source `Collection`. Result array will have corresponding order to source `Collection`'s order.
+    /// - note: `process` might be called not in order of a source `AsyncSequence`.
+    func map<T: Sendable>(limitingMaxConcurrentOperationCountTo maxConcurrentOperationCount: Int,
+                          process: @escaping @Sendable (Element) async throws -> T) -> any WorkPoolDrainer<T> {
+        StaticAsyncWorkPoolDrainer(stack: self, maxConcurrentOperationCount: maxConcurrentOperationCount, resultsOrder: .keepOriginalOrder) { element in
+            try await process(element)
+        }
+    }
 }
+

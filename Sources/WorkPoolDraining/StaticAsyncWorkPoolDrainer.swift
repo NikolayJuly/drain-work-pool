@@ -27,9 +27,10 @@ public final class StaticAsyncWorkPoolDrainer<Input: Sendable, Output: Sendable>
 
     public init(stack: some Collection<Input>,
                 maxConcurrentOperationCount: Int,
+                resultsOrder: OrderMode = .fifo,
                 process: @escaping @Sendable (Input) async throws -> Output) {
         precondition(maxConcurrentOperationCount > 0)
-        self.pool = DynamicAsyncWorkPoolDrainer(maxConcurrentOperationCount: maxConcurrentOperationCount)
+        self.pool = DynamicAsyncWorkPoolDrainer(maxConcurrentOperationCount: maxConcurrentOperationCount, resultsOrder: resultsOrder)
 
         let works: [@Sendable () async throws -> Output] = stack.map { element in
             { try await process(element) }

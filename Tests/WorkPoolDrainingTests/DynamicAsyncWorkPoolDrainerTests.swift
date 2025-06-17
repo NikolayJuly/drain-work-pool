@@ -112,6 +112,25 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
             await element.0.set(element.1)
         }
     }
+
+    func test_mapSameOrderAsSource() async throws {
+        let futures: [AsyncFuture<String>] = (0..<4).map { _ in AsyncFuture<String>() }
+
+        let pool = DynamicAsyncWorkPoolDrainer<String>(maxConcurrentOperationCount: 2, resultsOrder: .keepOriginalOrder)
+
+        let works: [@Sendable () async throws -> String] = futures.map { future in { try await future.value } }
+        pool.addMany(works)
+
+        for index in futures.indices.reversed() {
+            let future = futures[index]
+            await future.fulfil("\(index + 1)")
+        }
+
+        pool.closeIntake()
+
+        let result = try await pool.collect()
+        XCTAssertEqual(result, ["1", "2", "3", "4"])
+    }
 }
 
 

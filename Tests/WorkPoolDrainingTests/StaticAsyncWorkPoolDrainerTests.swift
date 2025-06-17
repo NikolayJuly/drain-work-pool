@@ -3,7 +3,7 @@ import XCTest
 @testable import WorkPoolDraining
 
 final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
-    // This test do not guarantee that `StaticSyncWorkPoolDrainer` works as expected. Better run few times
+    // This test do not guarantee that `StaticAsyncWorkPoolDrainerTests` works as expected. Better run few times
     // From other side - if it fails - we have an issue for sure
     func testIntProcessing() async throws {
 

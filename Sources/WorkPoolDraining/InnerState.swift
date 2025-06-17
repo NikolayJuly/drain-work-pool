@@ -1,19 +1,4 @@
-//
-//  InnerState.swift
-//  drain-work-pool
-//
-//  Created by Nikolay Dzhulay on 28/03/2025.
-//
-
 import Swift
-
-enum OrderMode {
-    /// In this mode, the iterator returns results in the order in which processor blocks complete, not the order of processors in the array.
-    case fifo
-
-    /// In this mode, the iterator will receive elements in the same order as the processors were added to the pool.
-    case keepOriginalOrder
-}
 
 private enum DrainerState: Sendable {
     case expectingWork

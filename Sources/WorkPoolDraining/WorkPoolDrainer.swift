@@ -5,7 +5,7 @@ public enum WorkPoolDrainerError: Error {
     case poolIntakeAlreadyClosed
 }
 
-public protocol WorkPoolDrainer<Element>: AsyncSequence {
+public protocol WorkPoolDrainer<Element>: AsyncSequence, Sendable {
     /// Cancel drain.
     ///
     /// Nothing happens if work pool is static and draining completed.

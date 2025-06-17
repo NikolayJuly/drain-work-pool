@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import WorkPoolDraning
+@testable import WorkPoolDraining
 
 final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
 
@@ -31,9 +31,9 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
 
         let resSet = Set(resArray)
 
-        let misteryElements = Set(0...1032).symmetricDifference(resSet)
+        let mysteryElements = Set(0...1032).symmetricDifference(resSet)
 
-        XCTAssertTrue(misteryElements.isEmpty, "We missing some elements in resuslt set. \(misteryElements.count) elements: \(misteryElements)")
+        XCTAssertTrue(mysteryElements.isEmpty, "We missing some elements in result set. \(mysteryElements.count) elements: \(mysteryElements)")
 
         XCTAssertEqual(resArray.count, 1033)
     }
@@ -77,9 +77,9 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
 
         let resSet = Set(resArray)
 
-        let misteryElements = Set(0...1031).symmetricDifference(resSet)
+        let mysteryElements = Set(0...1031).symmetricDifference(resSet)
 
-        XCTAssertTrue(misteryElements.isEmpty, "We missing some elements in resuslt set. \(misteryElements.count) elements: \(misteryElements)")
+        XCTAssertTrue(mysteryElements.isEmpty, "We missing some elements in result set. \(mysteryElements.count) elements: \(mysteryElements)")
 
         XCTAssertEqual(resArray.count, 1032)
     }
@@ -92,7 +92,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
         typealias Work = @Sendable () async throws -> Int
 
         let waiters = (0...10).map {
-            (ValueWaiter<Int>(), $0)
+            (AsyncValueWaiter<Int>(), $0)
         }
 
         let manyWorks: [Work] = waiters.map { [_concurrentlyRunning] tuple in

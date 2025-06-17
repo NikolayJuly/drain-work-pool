@@ -1,4 +1,4 @@
-# ``WorkPoolDraning``
+# ``WorkPoolDraining``
 
 This package aim to help with execution of big amount of tasks, but limit number of simultaneously executed tasks.
 

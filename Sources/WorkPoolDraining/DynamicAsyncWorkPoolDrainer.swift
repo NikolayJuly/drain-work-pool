@@ -35,7 +35,7 @@ public final class DynamicAsyncWorkPoolDrainer<T: Sendable>: AsyncSequence, Send
     public init(maxConcurrentOperationCount: Int) {
         precondition(maxConcurrentOperationCount > 0)
         self.maxConcurrentOperationCount = maxConcurrentOperationCount
-        self.innerState = InnerState(orderMode: .fifo, limit: .maxConcurrentOperationCount(maxConcurrentOperationCount))
+        self.innerState = InnerState(resultsOrder: .fifo, limit: .maxConcurrentOperationCount(maxConcurrentOperationCount))
     }
 
     public func add(_ work: @escaping Work) {

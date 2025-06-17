@@ -1,6 +1,6 @@
 ![swift](https://img.shields.io/badge/Swift-5.9-orange.svg)
 
-# WorkPoolDraning
+# WorkPoolDraining
 
 This package aim to help with execution of big amount of tasks, but limit number of simultaneously executed tasks.
 
@@ -12,11 +12,11 @@ dependencies: [
 ]
 ```
 
-Include "WorkPoolDraning" as a dependency for your target:
+Include "WorkPoolDraining" as a dependency for your target:
 
 ```
 .target(name: "<target>", dependencies: [
-    .product(name: "WorkPoolDraning", package: "drain-work-pool"),
+    .product(name: "WorkPoolDraining", package: "drain-work-pool"),
 ]),
 ```
 

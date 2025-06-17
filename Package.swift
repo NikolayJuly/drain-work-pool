@@ -10,16 +10,16 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "WorkPoolDraning",
-            targets: ["WorkPoolDraning"]),
+            name: "WorkPoolDraining",
+            targets: ["WorkPoolDraining"]),
     ],
     dependencies: [],
     targets: [
         .target(
-            name: "WorkPoolDraning",
+            name: "WorkPoolDraining",
             dependencies: []),
         .testTarget(
-            name: "WorkPoolDraningTests",
-            dependencies: ["WorkPoolDraning"]),
+            name: "WorkPoolDrainingTests",
+            dependencies: ["WorkPoolDraining"]),
     ]
 )

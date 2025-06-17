@@ -1,13 +1,14 @@
 import Swift
 
-actor ValueWaiter<T: Sendable> {
-    public init() {}
+actor AsyncValueWaiter<T: Sendable> {
+    init() {}
 
-    public init(_ t: T) {
+    init(_ t: T) {
         self.state = .value(t)
     }
 
-    public var value: T {
+    /// - note: This async operation is not cancellable. It means, that it will be kept in memory until value will be set or forever... use `AsyncFuture` if cancellation support is needed
+    var value: T {
         get async {
             switch state {
             case .waiting(_):
@@ -21,7 +22,7 @@ actor ValueWaiter<T: Sendable> {
     }
 
     /// - note: Must be called exactly once
-    public func set(_ value: T) {
+    func set(_ value: T) {
         switch state {
         case let .waiting(continuations):
             self.state = .value(value)

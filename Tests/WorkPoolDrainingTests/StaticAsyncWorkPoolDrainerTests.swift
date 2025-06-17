@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import WorkPoolDraning
+@testable import WorkPoolDraining
 
 final class StaticAsyncWorkPoolDrainerTests: XCTestCase {
     // This test do not guarantee that `StaticSyncWorkPoolDrainer` works as expected. Better run few times

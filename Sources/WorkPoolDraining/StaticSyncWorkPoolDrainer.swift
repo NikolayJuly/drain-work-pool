@@ -45,7 +45,7 @@ public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, Send
                 stack: some Collection<Input>,
                 process: @escaping (Input) throws -> Output) {
         precondition(queuesPool.count > 0)
-        self.innerState = InnerState(orderMode: .fifo, limit: .none)
+        self.innerState = InnerState(resultsOrder: .fifo, limit: .none)
         let producers: [() throws -> Output] = stack.map { item in
             let block: () throws -> Output = { try process(item) }
             return block

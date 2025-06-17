@@ -1,4 +1,5 @@
 import Foundation
+@testable import WorkPoolDraining
 
 @propertyWrapper
 final class Atomic<T>: @unchecked Sendable {
@@ -25,8 +26,6 @@ final class Atomic<T>: @unchecked Sendable {
         self._wrappedValue = wrappedValue
     }
 
-    /// Should be used, when checging property of wrapped value
-    /// For example, adding element to array
     @discardableResult @inlinable
     func mutate<R>(_ mutation: (inout T) throws -> R) rethrows -> R {
         lock.lock()
@@ -35,7 +34,6 @@ final class Atomic<T>: @unchecked Sendable {
         return r
     }
 
-    /// Should be used, when need to check few properties on wrapped value
     @inlinable
     func read<R>(_ read: (T) throws -> R) rethrows -> R {
         lock.lock()

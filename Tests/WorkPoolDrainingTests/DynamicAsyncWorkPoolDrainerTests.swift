@@ -131,6 +131,52 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
         let result = try await pool.collect()
         XCTAssertEqual(result, ["1", "2", "3", "4"])
     }
+
+    func test_cancellationWhileWaitCloseIntake() async throws {
+        let pool = DynamicAsyncWorkPoolDrainer<String>(maxConcurrentOperationCount: 2, resultsOrder: .keepOriginalOrder)
+
+        pool.add({ "String" })
+
+        let waitForCancel = expectation(description: "Wait for cancel throw")
+
+        Task {
+            do {
+                for try await _ in pool {}
+            } catch WorkPoolDrainerError.cancelled {
+            } catch {
+                XCTFail("Caught unexpected error: \(error). \(type(of: error as Any))")
+            }
+
+            waitForCancel.fulfill()
+        }
+
+        pool.cancel()
+
+        await fulfillment(of: [waitForCancel], timeout: 1)
+    }
+
+    func test_throwCancelIteration() async throws {
+        let pool = DynamicAsyncWorkPoolDrainer<String>(maxConcurrentOperationCount: 2, resultsOrder: .keepOriginalOrder)
+
+        let waitForCancel = expectation(description: "Wait for cancel throw")
+
+        Task {
+            do {
+                for try await _ in pool {}
+            } catch TestError.boom {
+            } catch {
+                XCTFail("Caught unexpected error: \(error). \(type(of: error as Any))")
+            }
+
+            waitForCancel.fulfill()
+        }
+
+        pool.add({ throw TestError.boom })
+
+        await fulfillment(of: [waitForCancel], timeout: 1)
+    }
 }
 
-
+private enum TestError: Error {
+    case boom
+}

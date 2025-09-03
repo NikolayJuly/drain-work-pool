@@ -64,7 +64,6 @@ Decision tree:
 - Static + Structured Concurrency: ``StaticAsyncWorkPoolDrainer``
 - Dynamic + Structured Concurrency: ``DynamicAsyncWorkPoolDrainer``
 
-
 ## Why?
 
 Why do we need this package, if we have `TaskGroup`?

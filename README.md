@@ -27,7 +27,7 @@ All work pools in the package are `AsyncSequence`, which work on a push approach
 
 ## Samples
 
-### Map an existing AsyncSequence, limiting the maximum number of concurrent operations
+**Map an existing AsyncSequence, limiting the maximum number of concurrent operations**
 
 
 ```
@@ -38,7 +38,7 @@ asyncSequence.process(limitingMaxConcurrentOperationCountTo: 5) {
 
 There are `process` and `map` options. `map` will keep the order of calls, which sometimes might be needed.
 
-### Create a drainer manually
+**Create a drainer manually**
 
 ```
 let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 5)
@@ -51,6 +51,11 @@ for try await i in pool {
     // process result
 }
 ```
+
+### Extensions
+- **AsyncSequence** — [Docs ↗](https://nikolayjuly.github.io/drain-work-pool/documentation/workpooldraining/_concurrency/asyncsequence)
+- **Collection** — [Docs ↗](https://nikolayjuly.github.io/drain-work-pool/documentation/workpooldraining/swift/collection)
+
 
 ## How to choose correct work pool?
 

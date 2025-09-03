@@ -29,7 +29,7 @@ public final class StaticSyncWorkPoolDrainer<Input, Output>: AsyncSequence, Send
 
     public typealias Element = Output
 
-    /// - parameter poolSize: number of queues in pool
+    /// - parameter queuesPoolSize: number of queues in pool
     public convenience init(queuesPoolSize: Int,
                             stack: some Collection<Input>,
                             qos: DispatchQoS = .unspecified,

@@ -9,26 +9,26 @@ All work pools in the package are `AsyncSequence`, which work on a push approach
 
 ## Samples
 
-### Map an existing AsyncSequence, limiting the maximum number of concurrent operations
+**Map an existing AsyncSequence, limiting the maximum number of concurrent operations**
 
 
 ```
 asyncSequence.process(limitingMaxConcurrentOperationCountTo: 5) {
-/* some heavy task */
+    /* some heavy task */
 }
 ```
 
-### Create a drainer manually
+**Create a drainer manually**
 
 ```
 let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 5)
 for i in 0..<1024 {
-pool.add { /* some heavy task */ }
+    pool.add { /* some heavy task */ }
 }
 pool.closeIntake()
 
 for try await i in pool {
-// process result
+    // process result
 }
 ```
 
@@ -46,7 +46,8 @@ There are **process** and **map** options. `map` will keep the order closure of 
 - ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)-95vq2``
 - ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)-6m7sn``
 
-** Collection extension **
+
+**Collection extension**
 
 ``Swift/Collection`` extension methods:
 

@@ -1,6 +1,6 @@
 import Foundation
 import XCTest
-@testable import WorkPoolDraning
+@testable import WorkPoolDraining
 
 final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
 
@@ -9,7 +9,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
     func testIntProcessingAndAddWorkDuringDraining() async throws {
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 20)
         for i in 0..<1024 {
-            try pool.add {
+            pool.add {
                 if Bool.random() {
                     try await Task.sleep(nanoseconds: 500)
                 }
@@ -21,7 +21,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
         for try await i in pool {
             resArray.append(i)
             if i % 128 == 0 {
-                try pool.add { 1024 + i/128 }
+                pool.add { 1024 + i/128 }
             }
 
             if i == 1024 {
@@ -31,9 +31,9 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
 
         let resSet = Set(resArray)
 
-        let misteryElements = Set(0...1032).symmetricDifference(resSet)
+        let mysteryElements = Set(0...1032).symmetricDifference(resSet)
 
-        XCTAssertTrue(misteryElements.isEmpty, "We missing some elements in resuslt set. \(misteryElements.count) elements: \(misteryElements)")
+        XCTAssertTrue(mysteryElements.isEmpty, "We missing some elements in result set. \(mysteryElements.count) elements: \(mysteryElements)")
 
         XCTAssertEqual(resArray.count, 1033)
     }
@@ -43,7 +43,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
         
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 20)
         for i in 0..<1024 {
-            try pool.add { [_concurrentlyRunning] in
+            pool.add { [_concurrentlyRunning] in
                 _concurrentlyRunning.increment()
                 defer {
                     _concurrentlyRunning.decrement()
@@ -68,7 +68,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
             if i == 1023 {
                 DispatchQueue.global().asyncAfter(deadline: .now() + .nanoseconds(500)) {
                     for i in 0..<8 {
-                        try? pool.add { 1024 + i }
+                        pool.add { 1024 + i }
                     }
                     pool.closeIntake()
                 }
@@ -77,9 +77,9 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
 
         let resSet = Set(resArray)
 
-        let misteryElements = Set(0...1031).symmetricDifference(resSet)
+        let mysteryElements = Set(0...1031).symmetricDifference(resSet)
 
-        XCTAssertTrue(misteryElements.isEmpty, "We missing some elements in resuslt set. \(misteryElements.count) elements: \(misteryElements)")
+        XCTAssertTrue(mysteryElements.isEmpty, "We missing some elements in result set. \(mysteryElements.count) elements: \(mysteryElements)")
 
         XCTAssertEqual(resArray.count, 1032)
     }
@@ -87,7 +87,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
     func test_addMany_SpawnsManySubtasks() async throws {
         let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 5)
 
-        @Atomic var concurrentlyRunning: Int = 0
+        let _concurrentlyRunning: Atomic<Int> = 0
 
         typealias Work = @Sendable () async throws -> Int
 
@@ -103,7 +103,7 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
                 return work
             }
 
-        try pool.addMany(manyWorks)
+        pool.addMany(manyWorks)
 
         let waitFor5Tasks = XCTestExpectation(predicate: { _concurrentlyRunning.wrappedValue == 5 })
         await fulfillment(of: [waitFor5Tasks], timeout: 1)
@@ -112,6 +112,71 @@ final class DynamicAsyncWorkPoolDrainerTests: XCTestCase {
             await element.0.set(element.1)
         }
     }
+
+    func test_mapSameOrderAsSource() async throws {
+        let futures: [AsyncFuture<String>] = (0..<4).map { _ in AsyncFuture<String>() }
+
+        let pool = DynamicAsyncWorkPoolDrainer<String>(maxConcurrentOperationCount: 2, resultsOrder: .keepOriginalOrder)
+
+        let works: [@Sendable () async throws -> String] = futures.map { future in { try await future.value } }
+        pool.addMany(works)
+
+        for index in futures.indices.reversed() {
+            let future = futures[index]
+            await future.fulfil("\(index + 1)")
+        }
+
+        pool.closeIntake()
+
+        let result = try await pool.collect()
+        XCTAssertEqual(result, ["1", "2", "3", "4"])
+    }
+
+    func test_cancellationWhileWaitCloseIntake() async throws {
+        let pool = DynamicAsyncWorkPoolDrainer<String>(maxConcurrentOperationCount: 2, resultsOrder: .keepOriginalOrder)
+
+        pool.add({ "String" })
+
+        let waitForCancel = expectation(description: "Wait for cancel throw")
+
+        Task {
+            do {
+                for try await _ in pool {}
+            } catch WorkPoolDrainerError.cancelled {
+            } catch {
+                XCTFail("Caught unexpected error: \(error). \(type(of: error as Any))")
+            }
+
+            waitForCancel.fulfill()
+        }
+
+        pool.cancel()
+
+        await fulfillment(of: [waitForCancel], timeout: 1)
+    }
+
+    func test_throwCancelIteration() async throws {
+        let pool = DynamicAsyncWorkPoolDrainer<String>(maxConcurrentOperationCount: 2, resultsOrder: .keepOriginalOrder)
+
+        let waitForCancel = expectation(description: "Wait for cancel throw")
+
+        Task {
+            do {
+                for try await _ in pool {}
+            } catch TestError.boom {
+            } catch {
+                XCTFail("Caught unexpected error: \(error). \(type(of: error as Any))")
+            }
+
+            waitForCancel.fulfill()
+        }
+
+        pool.add({ throw TestError.boom })
+
+        await fulfillment(of: [waitForCancel], timeout: 1)
+    }
 }
 
-
+private enum TestError: Error {
+    case boom
+}

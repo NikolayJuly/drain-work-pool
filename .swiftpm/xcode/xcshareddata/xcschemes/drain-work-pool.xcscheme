@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "1540"
+   LastUpgradeVersion = "1640"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "WorkPoolDraning"
-               BuildableName = "WorkPoolDraning"
-               BlueprintName = "WorkPoolDraning"
+               BlueprintIdentifier = "WorkPoolDraining"
+               BuildableName = "WorkPoolDraining"
+               BlueprintName = "WorkPoolDraining"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -34,9 +34,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "WorkPoolDraningTests"
-               BuildableName = "WorkPoolDraningTests"
-               BlueprintName = "WorkPoolDraningTests"
+               BlueprintIdentifier = "WorkPoolDrainingTests"
+               BuildableName = "WorkPoolDrainingTests"
+               BlueprintName = "WorkPoolDrainingTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>
@@ -62,9 +62,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "WorkPoolDraning"
-            BuildableName = "WorkPoolDraning"
-            BlueprintName = "WorkPoolDraning"
+            BlueprintIdentifier = "WorkPoolDraining"
+            BuildableName = "WorkPoolDraining"
+            BlueprintName = "WorkPoolDraining"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>

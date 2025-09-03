@@ -1,24 +1,6 @@
-![swift](https://img.shields.io/badge/Swift-6.0-orange.svg)
-
-# WorkPoolDraining
+# ``WorkPoolDraining``
 
 This package aims to help with execution of a large number of tasks while limiting the number of simultaneously executed tasks.
-
-## Installation
-
-```
-dependencies: [
-    .package(url: "https://github.com/NikolayJuly/drain-work-pool.git", from: "4.0.0"),
-]
-```
-
-Include "WorkPoolDraining" as a dependency for your target:
-
-```
-.target(name: "<target>", dependencies: [
-    .product(name: "WorkPoolDraining", package: "drain-work-pool"),
-]),
-```
 
 ## Overview
 
@@ -32,25 +14,47 @@ All work pools in the package are `AsyncSequence`, which work on a push approach
 
 ```
 asyncSequence.process(limitingMaxConcurrentOperationCountTo: 5) {
-    /* some heavy task */
+/* some heavy task */
 }
 ```
-
-There are `process` and `map` options. `map` will keep the order of calls, which sometimes might be needed.
 
 ### Create a drainer manually
 
 ```
 let pool = DynamicAsyncWorkPoolDrainer<Int>(maxConcurrentOperationCount: 5)
 for i in 0..<1024 {
-    pool.add { /* some heavy task */ }
+pool.add { /* some heavy task */ }
 }
 pool.closeIntake()
 
 for try await i in pool {
-    // process result
+// process result
 }
 ```
+
+## Extensions
+
+There are **process** and **map** options. `map` will keep the order closure of calls, which sometimes might be needed.
+
+**AsyncSequence extension**
+
+``_Concurrency/AsyncSequence`` extension methods:
+
+- ``_Concurrency/AsyncSequence/map(limitingMaxConcurrentOperationCountTo:process:)-4voyy``
+- ``_Concurrency/AsyncSequence/map(limitingMaxConcurrentOperationCountTo:process:)-39por``
+- ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)-6sff``
+- ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)-95vq2``
+- ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)-6m7sn``
+
+** Collection extension **
+
+``Swift/Collection`` extension methods:
+
+- ``Swift/Collection/map(limitingMaxConcurrentOperationCountTo:process:)``
+- ``Swift/Collection/process(limitingMaxConcurrentOperationCountTo:process:)-9ca0h``
+- ``Swift/Collection/process(limitingMaxConcurrentOperationCountTo:process:)-int2``
+- ``Swift/Collection/process(limitingMaxConcurrentOperationCountTo:process:)-6360o``
+
 
 ## How to choose correct work pool?
 
@@ -75,7 +79,11 @@ Why do we need this package, if we have `TaskGroup`?
 - CPU usage needs to be limited because you need to use your Mac while it executes long-running tasks in the background
 - Defining QoS is not always enough, as you might want to have more control over the number of simultaneous executions and not depend on QoS heuristics
 
-## Documentation
+## Topics
 
-Swift DocC documentation is available [here](https://nikolayjuly.github.io/drain-work-pool/documentation/workpooldraining/)
+### Work Pool Drainers
+
+- ``DynamicAsyncWorkPoolDrainer``
+- ``StaticAsyncWorkPoolDrainer``
+- ``StaticSyncWorkPoolDrainer``
 

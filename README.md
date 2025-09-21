@@ -1,4 +1,4 @@
-![swift](https://img.shields.io/badge/Swift-6.0-orange.svg)
+![swift](https://img.shields.io/badge/Swift-6.2-orange.svg)
 
 # WorkPoolDraining
 

@@ -1,12 +1,20 @@
 import Foundation
 
-#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+#if canImport(Darwin)
 import Darwin
+#elseif os(Linux) || os(FreeBSD) || os(Android)
+    #if canImport(Glibc)
+        @preconcurrency import Glibc
+    #elseif canImport(Musl)
+        @preconcurrency import Musl
+    #elseif canImport(Android)
+        @preconcurrency import Android
+    #endif
 #elseif os(Windows)
 import ucrt
 import WinSDK
 #else
-import Glibc
+#error("The POSIX system module was unable to identify your C library.")
 #endif
 
 // I took this implementation from NIO implementation: https://github.com/apple/swift-nio/blob/main/Sources/NIOConcurrencyHelpers/NIOLock.swift

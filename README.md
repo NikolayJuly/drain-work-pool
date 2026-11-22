@@ -8,7 +8,7 @@ This package aims to help with execution of a large number of tasks while limiti
 
 ```
 dependencies: [
-    .package(url: "https://github.com/NikolayJuly/drain-work-pool.git", from: "4.0.0"),
+    .package(url: "https://github.com/NikolayJuly/drain-work-pool.git", from: "5.0.0"),
 ]
 ```
 
@@ -37,6 +37,20 @@ asyncSequence.process(limitingMaxConcurrentOperationCountTo: 5) {
 ```
 
 There are `process` and `map` options. `map` will keep the order of calls, which sometimes might be needed.
+
+**Collect results that are not `Sendable`**
+
+```
+let pages = try await pageUrls.mapAndCollect(limitingMaxConcurrentOperationCountTo: 4) { url in
+    try await makeTexture(url) // returns a non-Sendable object
+}
+```
+
+Use the functions that wait for every result and return an array — `Collection.process`, `Collection.mapAndCollect`, `AsyncSequence.process`, `AsyncSequence.map` — when a result is not `Sendable`.
+Each job gives its result away (`sending T`) and the caller owns the returned array (`sending [T]`); a job that keeps a reference to the value it returns does not compile.
+`mapAndCollect` keeps the order of the source collection, `process` returns results in completion order.
+
+Drainers and the functions that return `any WorkPoolDrainer<T>` still require `T: Sendable`: one result can reach several iterators of the same drainer.
 
 **Create a drainer manually**
 
@@ -79,6 +93,11 @@ Why do we need this package, if we have `TaskGroup`?
 - Storage bandwidth is limited, so there’s no reason to start thousands of read/write operations at the same time
 - CPU usage needs to be limited because you need to use your Mac while it executes long-running tasks in the background
 - Defining QoS is not always enough, as you might want to have more control over the number of simultaneous executions and not depend on QoS heuristics
+
+## Static Linux SDK (musl)
+
+The library builds with the Static Linux SDK: `swift build --swift-sdk x86_64-swift-linux-musl` (or `aarch64-swift-linux-musl`).
+Tests are not built with it: the SDK ships neither `XCTest` nor `Testing`.
 
 ## Documentation
 

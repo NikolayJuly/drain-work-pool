@@ -36,14 +36,16 @@ for try await i in pool {
 
 There are **process** and **map** options. `map` will keep the order closure of calls, which sometimes might be needed.
 
+Functions that wait for every result and return an array (`process`, `map` on `AsyncSequence`, `process`, `mapAndCollect` on `Collection`) do not require a `Sendable` result: each job returns `sending T`, the caller receives `sending [T]`.
+
 **AsyncSequence extension**
 
 ``_Concurrency/AsyncSequence`` extension methods:
 
 - ``_Concurrency/AsyncSequence/map(limitingMaxConcurrentOperationCountTo:process:)-4voyy``
-- ``_Concurrency/AsyncSequence/map(limitingMaxConcurrentOperationCountTo:process:)-39por``
+- ``_Concurrency/AsyncSequence/map(limitingMaxConcurrentOperationCountTo:process:)->[T]``
 - ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)-6sff``
-- ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)-95vq2``
+- ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)->[T]``
 - ``_Concurrency/AsyncSequence/process(limitingMaxConcurrentOperationCountTo:process:)-6m7sn``
 
 
@@ -52,8 +54,9 @@ There are **process** and **map** options. `map` will keep the order closure of 
 ``Swift/Collection`` extension methods:
 
 - ``Swift/Collection/map(limitingMaxConcurrentOperationCountTo:process:)``
+- ``Swift/Collection/mapAndCollect(limitingMaxConcurrentOperationCountTo:process:)``
 - ``Swift/Collection/process(limitingMaxConcurrentOperationCountTo:process:)-9ca0h``
-- ``Swift/Collection/process(limitingMaxConcurrentOperationCountTo:process:)-int2``
+- ``Swift/Collection/process(limitingMaxConcurrentOperationCountTo:process:)->[T]``
 - ``Swift/Collection/process(limitingMaxConcurrentOperationCountTo:process:)-6360o``
 
 

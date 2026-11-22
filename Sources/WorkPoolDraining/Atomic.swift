@@ -1,5 +1,6 @@
+// Atomic.swift
+
 import Foundation
-@testable import WorkPoolDraining
 
 @propertyWrapper
 final class Atomic<T>: @unchecked Sendable {
